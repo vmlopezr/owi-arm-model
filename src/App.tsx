@@ -50,8 +50,18 @@ class App extends React.PureComponent<{}, State> {
             max={85}
             min={-85}
           />
-          <ValueSlider updateValue={this.updateAngle3} label={'Joint 3'} />
-          <ValueSlider updateValue={this.updateAngle4} label={'Joint 4'} />
+          <ValueSlider
+            updateValue={this.updateAngle3}
+            label={'Joint 3'}
+            max={135}
+            min={-135}
+          />
+          <ValueSlider
+            updateValue={this.updateAngle4}
+            label={'Joint 4'}
+            max={60}
+            min={-60}
+          />
         </div>
 
         <ThreeContainer angles={this.state.angles} />
