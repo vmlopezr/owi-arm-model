@@ -1,37 +1,35 @@
 import Grid from '@material-ui/core/Grid';
 import Slider from '@material-ui/core/Slider';
-import Typography from '@material-ui/core/Typography';
 import React from 'react';
+import '../App.scss';
 
 interface Props {
-  updateValue(value: number): void;
+  updateValue(index: number, value: number): void;
+  index: number;
   label: string;
-  defaultValue?: number;
+  defaultVal?: number;
   max?: number;
   min?: number;
+  valUnit?: string;
 }
 const ValueSlider = (props: Props) => {
   const [value, setValue] = React.useState(
-    props.defaultValue ? props.defaultValue : 0,
+    props.defaultVal ? props.defaultVal : 0,
   );
 
   const handleSliderChange = (event: React.ChangeEvent<{}>, value: any) => {
     setValue(value);
-    props.updateValue(value);
+    props.updateValue(props.index, value);
+    event.stopPropagation();
+    event.preventDefault();
   };
 
+  const valUnit = props.valUnit ? props.valUnit : '';
   return (
-    <div>
-      <link
-        rel="stylesheet"
-        href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"
-      />
-      <Typography id="input-slider" gutterBottom>
-        Volume
-      </Typography>
+    <div className="slider">
       <Grid container spacing={2} alignItems="center">
         <Grid item>
-          <h2>{props.label}</h2>
+          <b>{props.label}</b>
         </Grid>
         <Grid item xs>
           <Slider
@@ -43,7 +41,7 @@ const ValueSlider = (props: Props) => {
           />
         </Grid>
         <Grid item>
-          <p>{value}</p>
+          <b>{value + valUnit}</b>
         </Grid>
       </Grid>
     </div>

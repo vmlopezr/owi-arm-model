@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import '../App.scss';
 interface Props {
-  angles: number[];
+  robotValues: number[];
 }
 export default class ThreeContainer extends Component<Props> {
   threeRootElement: React.RefObject<HTMLDivElement>;
@@ -17,17 +17,18 @@ export default class ThreeContainer extends Component<Props> {
   jointAxisStart: THREE.Object3D[];
   jointAxisEnd: THREE.Object3D[];
   origins: THREE.Object3D[];
-  gripper: THREE.Group;
+  gripper: THREE.Object3D[];
+  gripperPositions: THREE.Object3D[];
   yMat: THREE.MeshStandardMaterial;
   blackMat: THREE.MeshStandardMaterial;
-  angles: number[];
+  prevAngles: number[];
   constructor(props: any) {
     super(props);
     this.frameId = 0;
     this.threeRootElement = React.createRef<HTMLDivElement>();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.light = new THREE.PointLight(0xffffff);
-    this.angles = [0, 0, 0, 0];
+    this.prevAngles = [0, 0, 0, 0];
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.update();
@@ -36,8 +37,11 @@ export default class ThreeContainer extends Component<Props> {
     this.jointAxisStart = [];
     this.jointAxisEnd = [];
     this.origins = [];
+    this.gripperPositions = [];
+
     for (let i = 0; i < 4; i++) {
       this.joint.push(new THREE.Group());
+      this.gripperPositions.push(new THREE.Object3D());
       if (i < 3) {
         this.jointAxisStart.push(new THREE.Object3D());
         this.jointAxisEnd.push(new THREE.Object3D());
@@ -45,20 +49,22 @@ export default class ThreeContainer extends Component<Props> {
       }
     }
 
-    this.gripper = new THREE.Group();
+    this.gripper = [];
     this.scene = new THREE.Scene();
     this.yMat = new THREE.MeshStandardMaterial({ color: 0xffdf20 });
     this.blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
   }
   shouldComponentUpdate(prevProps: Props) {
-    if (prevProps.angles[0] !== this.props.angles[0]) {
+    if (prevProps.robotValues[0] !== this.props.robotValues[0]) {
       this.rotateJoint1();
-    } else if (prevProps.angles[1] !== this.props.angles[1]) {
+    } else if (prevProps.robotValues[1] !== this.props.robotValues[1]) {
       this.rotateJoint2();
-    } else if (prevProps.angles[2] !== this.props.angles[2]) {
+    } else if (prevProps.robotValues[2] !== this.props.robotValues[2]) {
       this.rotateJoints3();
-    } else if (prevProps.angles[3] !== this.props.angles[3]) {
+    } else if (prevProps.robotValues[3] !== this.props.robotValues[3]) {
       this.rotateJoints4();
+    } else if (prevProps.robotValues[4] !== this.props.robotValues[4]) {
+      this.updateGripper();
     }
     return false;
   }
@@ -76,6 +82,7 @@ export default class ThreeContainer extends Component<Props> {
     this.joint[0].add(this.joint[1]);
     this.scene.add(this.joint[0]);
     // Constructor Robot Arm base
+    const base = new THREE.Group();
     const baseCylinder = [];
     baseCylinder.push(new THREE.Mesh(this.createCylinder(4, 1), this.blackMat));
     baseCylinder[0].position.set(0, 0.5, 0);
@@ -83,18 +90,18 @@ export default class ThreeContainer extends Component<Props> {
     baseCylinder[1].position.set(0, 2, 0);
     baseCylinder.push(new THREE.Mesh(this.createCylinder(4, 1), this.blackMat));
     baseCylinder[2].position.set(0, 3.5, 0);
-    baseCylinder.forEach((cylinder) => {
-      this.scene.add(cylinder);
-    });
+    baseCylinder.forEach((cylinder) => base.add(cylinder));
+
     const baseBox = [];
     baseBox.push(new THREE.Mesh(this.createBox(12, 4, 6), this.blackMat));
     baseBox[0].position.set(6, 2, 0);
     baseBox.push(new THREE.Mesh(this.createBox(6, 0.5, 4), this.yMat));
     baseBox[1].position.set(8, 4.25, 0);
-    this.scene.add(baseBox[0]);
-    this.scene.add(baseBox[1]);
-
-    this.joint.forEach((value) => console.log(value));
+    base.add(baseBox[0]);
+    base.add(baseBox[1]);
+    this.scene.add(base);
+    base.rotateY(Math.PI / 2);
+    this.joint[0].rotateY(Math.PI / 2);
     // Construct joint[0]
     const joint2Base = new THREE.Mesh(this.createBox(3, 3, 3), this.yMat);
     joint2Base.position.set(0, 5.5, 0);
@@ -228,21 +235,20 @@ export default class ThreeContainer extends Component<Props> {
     );
     this.joint[2].add(line3);
 
-    const gripper = [];
-    gripper.push(new THREE.Mesh(this.createBox(0.7, 6, 0.7), this.blackMat));
-    gripper[0].position.set(0, 23.5, -0.675);
-    gripper.push(new THREE.Mesh(this.createBox(0.7, 6, 0.7), this.blackMat));
-    gripper[1].position.set(0, 23.5, 0.675);
-    gripper.forEach((value) => this.joint[3].add(value));
-
-    this.joint[0].applyMatrix4(new THREE.Matrix4().makeTranslation(0, 0, 0));
-    // this.joint[1].applyMatrix4(new THREE.Matrix4().makeTranslation(0, 5.5, 0));
-    // this.joint[2].applyMatrix4(
-    //   new THREE.Matrix4().makeTranslation(0, 13.5, 0)
-    // );
-    // this.joint[3].applyMatrix4(
-    //   new THREE.Matrix4().makeTranslation(0, 18.5, 0)
-    // );
+    this.gripper.push(
+      new THREE.Mesh(this.createBox(0.7, 6, 0.7), this.blackMat),
+    );
+    this.gripper[0].position.set(0, 23.5, -0.7);
+    this.gripper.push(
+      new THREE.Mesh(this.createBox(0.7, 6, 0.7), this.blackMat),
+    );
+    this.gripper[1].position.set(0, 23.5, 0.7);
+    this.gripper.forEach((value) => this.joint[3].add(value));
+    this.gripperPositions[0].position.set(0, 23.5, -0.15);
+    this.gripperPositions[1].position.set(0, 23.5, -0.7);
+    this.gripperPositions[2].position.set(0, 23.5, 0.15);
+    this.gripperPositions[3].position.set(0, 23.5, 0.7);
+    this.gripperPositions.forEach((value) => this.joint[3].add(value));
 
     window.addEventListener('resize', this.onSizeChange, false);
     this.createDisplay();
@@ -253,8 +259,8 @@ export default class ThreeContainer extends Component<Props> {
   };
   onSizeChange = () => {
     const { innerHeight, innerWidth } = window;
-    this.renderer.setSize(innerWidth * 0.6, innerHeight);
-    this.camera.aspect = (innerWidth * 0.6) / innerHeight;
+    this.renderer.setSize(innerWidth, innerHeight);
+    this.camera.aspect = innerWidth / innerHeight;
     this.camera.updateProjectionMatrix();
   };
   createBox = (
@@ -268,61 +274,61 @@ export default class ThreeContainer extends Component<Props> {
   vec(x: number, y: number, z: number): THREE.Vector3 {
     return new THREE.Vector3(x, y, z);
   }
-  worldPos(object: THREE.Object3D): THREE.Vector3 {
-    const position = new THREE.Vector3();
-    return object.getWorldPosition(position);
-  }
   rotateJoint1 = () => {
-    const angle = this.props.angles[0] - this.angles[0];
+    const angle = this.props.robotValues[0] - this.prevAngles[0];
     this.joint[0].rotateY((angle * Math.PI) / 180);
-    this.angles[0] = this.props.angles[0];
+    this.prevAngles[0] = this.props.robotValues[0];
   };
   rotateJoint2 = () => {
-    const angle = this.props.angles[1] - this.angles[1];
+    const angle = this.rad(this.props.robotValues[1] - this.prevAngles[1]);
     const axis = this.jointAxisStart[0].position
       .clone()
       .sub(this.jointAxisEnd[0].position);
-    this.rotateAboutPoint(
-      this.joint[1],
-      this.origins[0].position,
-      axis.normalize(),
-      this.rad(angle),
-      false,
-    );
-
-    this.angles[1] = this.props.angles[1];
+    const point = this.origins[0].position;
+    this.rotate(this.joint[1], point, axis, angle);
+    // Store angle
+    this.prevAngles[1] = this.props.robotValues[1];
   };
 
   rotateJoints3 = () => {
-    const angle = this.props.angles[2] - this.angles[2];
+    const angle = this.rad(this.props.robotValues[2] - this.prevAngles[2]);
     const axis = this.jointAxisStart[1].position
       .clone()
       .sub(this.jointAxisEnd[1].position);
-    this.rotateAboutPoint(
-      this.joint[2],
-      this.origins[1].position,
-      axis.normalize(),
-      this.rad(angle),
-      false,
-    );
+    const point = this.origins[1].position;
+    this.rotate(this.joint[2], point, axis, angle);
 
-    this.angles[2] = this.props.angles[2];
+    this.prevAngles[2] = this.props.robotValues[2];
   };
   rotateJoints4 = () => {
-    const angle = this.props.angles[3] - this.angles[3];
+    const angle = this.rad(this.props.robotValues[3] - this.prevAngles[3]);
     const axis = this.jointAxisStart[2].position
       .clone()
       .sub(this.jointAxisEnd[2].position);
-    this.rotateAboutPoint(
-      this.joint[3],
-      this.origins[2].position,
-      axis.normalize(),
-      this.rad(angle),
-      false,
-    );
+    const point = this.origins[2].position;
+    this.rotate(this.joint[3], point, axis, angle);
 
-    this.angles[3] = this.props.angles[3];
+    this.prevAngles[3] = this.props.robotValues[3];
   };
+  updateGripper = () => {
+    const leftDelta = this.gripperPositions[1].position
+      .clone()
+      .sub(this.gripperPositions[0].position);
+    const rightDelta = this.gripperPositions[3].position
+      .clone()
+      .sub(this.gripperPositions[2].position);
+    this.gripper[0].position.copy(
+      leftDelta
+        .multiplyScalar((this.props.robotValues[4] - 50) / 100)
+        .add(this.gripperPositions[1].position),
+    );
+    this.gripper[1].position.copy(
+      rightDelta
+        .multiplyScalar((this.props.robotValues[4] - 50) / 100)
+        .add(this.gripperPositions[3].position),
+    );
+  };
+
   rad = (angle: number): number => (angle * Math.PI) / 180;
 
   createDisplay = (): void => {
@@ -335,30 +341,21 @@ export default class ThreeContainer extends Component<Props> {
     this.light.position.set(-5, 5, 5);
     this.scene.add(this.light);
     // Set camera
-    this.camera?.position.set(-20, 20, 20);
-    this.camera?.lookAt(0, 0, 0);
+    this.camera?.position.set(-40, 40, 40);
+    this.camera?.lookAt(0, 5.5, 0);
   };
-  rotateAboutPoint = (
+  rotate = (
     obj: THREE.Object3D,
     point: THREE.Vector3,
     axis: THREE.Vector3,
     theta: number,
-    pointIsWorld: boolean,
   ) => {
-    const IsWorld = pointIsWorld ? true : false;
-    if (IsWorld) {
-      obj.parent?.localToWorld(obj.position); // compensate for world coordinate
-    }
+    const normalAxis = axis.normalize();
     obj.position.sub(point); // remove the offset
-    obj.position.applyAxisAngle(axis, theta); // rotate the POSITION
+    obj.position.applyAxisAngle(normalAxis, theta); // rotate the POSITION
     obj.position.add(point); // re-add the offset
-    //
-    if (IsWorld) {
-      obj.parent?.worldToLocal(obj.position); // undo world coordinates compensation
-    }
 
-    obj.rotateOnAxis(axis, theta); // rotate the OBJECT
-    // obj.rotateOnWorldAxis(axis, theta);
+    obj.rotateOnAxis(normalAxis, theta); // rotate the OBJECT
   };
 
   start = () => {
@@ -383,7 +380,6 @@ export default class ThreeContainer extends Component<Props> {
     this.frameId = requestAnimationFrame(this.animate);
   };
   render() {
-    console.log('rendering');
     return <div ref={this.threeRootElement} className="threeCanvas" />;
   }
 }
