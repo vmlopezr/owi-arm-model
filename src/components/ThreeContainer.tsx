@@ -254,6 +254,9 @@ export default class ThreeContainer extends Component<Props> {
     this.createDisplay();
     this.start();
   }
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.onSizeChange);
+  }
   createCylinder = (radius: number, height: number): THREE.CylinderGeometry => {
     return new THREE.CylinderGeometry(radius, radius, height, 30);
   };

@@ -12,19 +12,36 @@ body {
   flex-direction: row;
   width: 100vw;
   height: 100vh;
+  position: relative;
   overflow-y: hidden;
 }
 .controls {
   position: absolute;
   flex-direction: column;
-  width: 40%;
-  height: 40%;
   text-align: center;
   justify-items: center;
-
   border: 1px solid #706e6e ;
   overflow-y: auto;
   overflow-x: auto;
+}
+#style-1::-webkit-scrollbar-track
+{
+  width: 7px;
+}
+
+#style-1::-webkit-scrollbar
+{
+	width: 8px;
+	background-color: #6661682f;
+}
+
+#style-1::-webkit-scrollbar-thumb
+{
+	border-radius: 10px;
+	background-color: rgb(175, 172, 172);
+}
+#style-1::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 .threeCanvas {
   display: flex;
