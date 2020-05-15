@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import * as THREE from 'three';
+import { Vector2 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import '../App.scss';
 interface Props {
@@ -27,6 +28,7 @@ export default class ThreeContainer extends Component<Props> {
     this.frameId = 0;
     this.threeRootElement = React.createRef<HTMLDivElement>();
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    // this.renderer.setPixelRatio(window.devicePixelRatio);
     this.light = new THREE.PointLight(0xffffff);
     this.prevAngles = [0, 0, 0, 0];
     this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
@@ -261,10 +263,14 @@ export default class ThreeContainer extends Component<Props> {
     return new THREE.CylinderGeometry(radius, radius, height, 30);
   };
   onSizeChange = () => {
-    const { innerHeight, innerWidth } = window;
-    this.renderer.setSize(innerWidth, innerHeight);
-    this.camera.aspect = innerWidth / innerHeight;
-    this.camera.updateProjectionMatrix();
+    if (this.threeRootElement.current) {
+      const { clientWidth, clientHeight } = this.threeRootElement.current;
+
+      console.log(this.renderer.getSize(new Vector2()));
+      this.camera.aspect = clientWidth / clientHeight;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(clientWidth, clientHeight, true);
+    }
   };
   createBox = (
     width: number,
@@ -273,10 +279,6 @@ export default class ThreeContainer extends Component<Props> {
   ): THREE.BoxGeometry => {
     return new THREE.BoxGeometry(width, height, depth);
   };
-  // get a new vector
-  vec(x: number, y: number, z: number): THREE.Vector3 {
-    return new THREE.Vector3(x, y, z);
-  }
   rotateJoint1 = () => {
     const angle = this.props.robotValues[0] - this.prevAngles[0];
     this.joint[0].rotateY((angle * Math.PI) / 180);

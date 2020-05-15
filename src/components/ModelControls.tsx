@@ -93,6 +93,7 @@ class ModelControls extends React.PureComponent<Props, State> {
         width: isPortrait ? '100%' : '40%',
         height: isPortrait ? '40%' : '100%',
       });
+      window.scrollTo(0, 0);
     } else {
       if (this.containerRef.current) {
         const { offsetHeight, offsetWidth } = this.containerRef.current;
@@ -186,15 +187,16 @@ class ModelControls extends React.PureComponent<Props, State> {
     }
     const { pageX, pageY } = event.touches[0];
     const { innerHeight, innerWidth } = window;
-    const { clientWidth, clientHeight } = event.currentTarget;
+    const { offsetWidth, offsetHeight } = event.currentTarget;
 
     let newX = pageX - this.state.rel.x;
     let newY = pageY - this.state.rel.y;
     if (newX < 0) newX = 0;
-    else if (newX > innerWidth - clientWidth) newX = innerWidth - clientWidth;
+    else if (newX > innerWidth - offsetWidth)
+      newX = innerWidth - offsetWidth - 5;
     if (newY < 0) newY = 0;
-    else if (newY > innerHeight - clientHeight)
-      newY = innerHeight - clientHeight;
+    else if (newY > innerHeight - offsetHeight)
+      newY = innerHeight - offsetHeight - 5;
     this.setState({
       pos: {
         x: newX,
