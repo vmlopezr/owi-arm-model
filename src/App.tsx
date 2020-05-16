@@ -15,7 +15,6 @@ class App extends React.PureComponent<{}, State> {
     config[index] = value;
     this.setState({ robotValues: config });
   };
-
   render(): JSX.Element {
     return (
       <div className="page">

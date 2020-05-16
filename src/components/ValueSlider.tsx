@@ -1,5 +1,3 @@
-import Grid from '@material-ui/core/Grid';
-import Slider from '@material-ui/core/Slider';
 import React from 'react';
 import '../App.scss';
 
@@ -17,33 +15,55 @@ const ValueSlider = (props: Props) => {
     props.defaultVal ? props.defaultVal : 0,
   );
 
-  const handleSliderChange = (event: React.ChangeEvent<{}>, value: any) => {
-    setValue(value);
-    props.updateValue(props.index, value);
+  const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setValue(parseInt(event.target.value));
+    props.updateValue(props.index, parseInt(event.target.value));
     event.stopPropagation();
     event.preventDefault();
   };
-
+  const onMouseDown = (
+    event: React.MouseEvent<HTMLInputElement, MouseEvent>,
+  ) => {
+    // Stop propagation to parent div event
+    event.stopPropagation();
+  };
+  const onMouseUp = (event: React.MouseEvent<HTMLInputElement, MouseEvent>) => {
+    // Stop propagation to parent div event
+    event.stopPropagation();
+  };
+  const onTouchStart = (event: React.TouchEvent<HTMLInputElement>) => {
+    // Stop propagation to parent div event
+    event.stopPropagation();
+  };
+  const onTouchEnd = (event: React.TouchEvent<HTMLInputElement>) => {
+    // Stop propagation to parent div event
+    event.stopPropagation();
+  };
   const valUnit = props.valUnit ? props.valUnit : '';
   return (
-    <div className="slider">
-      <Grid container spacing={2} alignItems="center">
-        <Grid item>
-          <b>{props.label}</b>
-        </Grid>
-        <Grid item xs>
-          <Slider
-            value={typeof value === 'number' ? value : 0}
-            onChange={handleSliderChange}
-            aria-labelledby="input-slider"
-            max={props.max ? props.max : 100}
-            min={props.min ? props.min : 0}
-          />
-        </Grid>
-        <Grid item>
-          <b>{value + valUnit}</b>
-        </Grid>
-      </Grid>
+    <div className="slider-container">
+      <div className="slider-label">
+        <b>{props.label}</b>
+      </div>
+      <div className="sliderDiv">
+        <input
+          className="slider"
+          type="range"
+          defaultValue={value}
+          style={{ zIndex: 20 }}
+          onMouseDown={onMouseDown}
+          onMouseUp={onMouseUp}
+          onTouchStart={onTouchStart}
+          onTouchEnd={onTouchEnd}
+          onChange={handleSliderChange}
+          min={props.min ? props.min : 0}
+          max={props.max ? props.max : 0}
+          step="1"
+        />
+      </div>
+      <div className="slider-value">
+        <b>{value + valUnit}</b>
+      </div>
     </div>
   );
 };

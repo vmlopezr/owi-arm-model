@@ -1,7 +1,7 @@
-.app-header {
-  background-color: #f00;
-  text-align: center;
-}
+$slider-height: 18px;
+$slider-thumb-height: 25px;
+$slider-thumb-width: 22px;
+$slider-thumb-color: #3f75a5f3;
 body {
   width: 100vw;
   height: 100vw;
@@ -9,60 +9,146 @@ body {
   padding: 0px;
   overflow: hidden;
 }
-
 .page {
-  background-color: rgba(59, 33, 83, 0.726);
+  background-color: rgba(161, 161, 161, 0.726);
   display: flex;
   flex-direction: row;
   width: 100vw;
   height: 100vh;
-  // position: relative;
-  // overflow-y: hidden;
 }
 .controls {
   position: absolute;
   flex-direction: column;
   text-align: center;
   justify-items: center;
-  border: 1px solid #706e6e ;
-  overflow-y: auto;
-  overflow-x: auto;
+  color: #f1faffb0;
 }
-#style-1::-webkit-scrollbar-track
-{
+.controls h1 {
+  font-size: 30px;
+  padding: 0px;
+  margin-bottom: 0px;
+}
+.controls p {
+  text-align: justify;
+  margin: 18px;
+  padding: 1px;
+}
+#style-1::-webkit-scrollbar-track {
   width: 7px;
 }
 canvas {
   display: block;
 }
-#style-1::-webkit-scrollbar
-{
-	width: 8px;
-	background-color: #6661682f;
+#style-1::-webkit-scrollbar {
+  width: 8px;
+  background-color: #6661682f;
 }
 
-#style-1::-webkit-scrollbar-thumb
-{
-	border-radius: 10px;
-	background-color: rgb(175, 172, 172);
+#style-1::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: rgb(175, 172, 172);
 }
 #style-1::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
 .threeCanvas {
-  display: inline;
   width: 100vw;
   height: 100vh;
 }
+.slider-container {
+  display: flex;
+  flex-direction: row;
+  margin: auto;
+  width: 95%;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+.slider-label {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 4;
+  font-size: 14px;
+}
+.sliderDiv {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 12;
+}
+.slider-value {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 3;
+}
 .disable-selection {
   -moz-user-select: none; /* Firefox */
-   -ms-user-select: none; /* Internet Explorer */
--khtml-user-select: none; /* KHTML browsers (e.g. Konqueror) */
--webkit-user-select: none; /* Chrome, Safari, and Opera */
--webkit-touch-callout: none; /* Disable Android and iOS callouts*/
+  -ms-user-select: none; /* Internet Explorer */
+  -khtml-user-select: none; /* KHTML browsers (e.g. Konqueror) */
+  -webkit-user-select: none; /* Chrome, Safari, and Opera */
+  -webkit-touch-callout: none; /* Disable Android and iOS callouts*/
 }
+
+/* The slider itself */
 .slider {
-  display: inline-block;
-  width: 85%;
-  padding: 10px 0px;
+  -webkit-appearance: none; /* Override default CSS styles */
+  appearance: none;
+  width: 100%; /* Full-width */
+  height: $slider-height; /* Specified height */
+  background: #6b6b6b; /* Grey background */
+  border-radius: 3px;
+  outline: none; /* Remove outline */
+  opacity: 0.7; /* Set transparency (for mouse-over effects on hover) */
+  -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
+  transition: opacity 0.2s;
+}
+
+/* Mouse-over effects */
+.slider:hover {
+  opacity: 1; /* Fully shown on mouse-over */
+}
+/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; /* Override default look */
+  appearance: none;
+  width: $slider-thumb-width; /* Set a specific slider handle width */
+  height: $slider-thumb-height; /* Slider handle height */
+  background: $slider-thumb-color; /* Green background */
+  border-radius: 3px;
+  cursor: pointer; /* Cursor on hover */
+}
+.slider::-moz-range-progress {
+  background: #494444;
+  height: $slider-height;
+}
+.slider::-moz-range-thumb {
+  width: $slider-thumb-width; /* Set a specific slider handle width */
+  height: $slider-thumb-height; /* Slider handle height */
+  background: $slider-thumb-color; /* Green background */
+  border-radius: 3px;
+  cursor: pointer; /* Cursor on hover */
+}
+
+@media only screen and (min-width: 990px) {
+  .slider-label {
+    font-size: 20px;
+  }
+  .slider-value {
+    font-size: 20px;
+  }
+  .controls h1 {
+    font-size: 40px;
+    padding-bottom: 10px;
+    margin-bottom: 0px;
+  }
+  .controls p {
+    text-align: justify;
+    padding-left: 6%;
+    padding-right: 6%;
+  }
+  .controls:hover {
+    background: #0066ffc0;
+    border: #7778a7c0 1px solid;
+  }
 }
