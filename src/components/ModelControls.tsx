@@ -29,6 +29,13 @@ interface State {
   showAxes: boolean;
   showLabels: boolean;
 }
+interface Config {
+  label: string;
+  defaultVal: number;
+  max: number;
+  min: number;
+  valUnit: string;
+}
 const controlConfig = [
   {
     label: 'Joint 1',
@@ -63,7 +70,7 @@ const controlConfig = [
 const defaultBackground = '#222831da';
 const backgroundHover = '#222831a0';
 
-class ModelControls extends React.PureComponent<Props, State> {
+class ModelControls extends React.Component<Props, State> {
   containerRef: React.RefObject<HTMLDivElement>;
   longPressTimeout: any;
   onMobile: boolean;
@@ -94,6 +101,7 @@ class ModelControls extends React.PureComponent<Props, State> {
       showLabels: true,
     };
   }
+
   componentDidMount() {
     window.addEventListener('resize', this.resizeControls, false);
     if (this.onMobile) {
@@ -134,7 +142,6 @@ class ModelControls extends React.PureComponent<Props, State> {
     }
   };
   onMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    console.log('controls mouse down');
     if (event.button !== 0) return;
     const top = event.currentTarget.offsetTop;
     const left = event.currentTarget.offsetLeft;
@@ -152,7 +159,6 @@ class ModelControls extends React.PureComponent<Props, State> {
     event.stopPropagation();
   };
   onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    console.log('controls mouse up');
     event.currentTarget.style.cursor = 'auto';
     this.setState({ dragging: false, backgroundColor: defaultBackground });
     event.stopPropagation();
@@ -189,7 +195,6 @@ class ModelControls extends React.PureComponent<Props, State> {
     event.stopPropagation();
   };
   onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
-    console.log('touch start');
     const top = event.currentTarget.offsetTop;
     const left = event.currentTarget.offsetLeft;
     const { pageX, pageY } = event.touches[0];
@@ -302,8 +307,15 @@ class ModelControls extends React.PureComponent<Props, State> {
     this.setState({ backgroundColor: backgroundHover });
     event.stopPropagation();
   };
+  renderSlider = (config: Config, index: number) => (
+    <ValueSlider
+      key={index}
+      {...config}
+      updateValue={this.props.updateConfig}
+      index={index}
+    />
+  );
   render() {
-    console.log('controls rendering');
     return (
       <div>
         <div
@@ -334,14 +346,7 @@ class ModelControls extends React.PureComponent<Props, State> {
             drag or scroll on the model screen to transform the display. Press
             and hold to drag the panel.
           </p>
-          {controlConfig.map((config, index) => (
-            <ValueSlider
-              key={index}
-              {...config}
-              updateValue={this.props.updateConfig}
-              index={index}
-            />
-          ))}
+          {controlConfig.map(this.renderSlider)}
           <div className="button-container">
             <ButtonToolbar aria-label="Toolbar with button groups">
               <ButtonGroup className="mr-2">
@@ -350,7 +355,8 @@ class ModelControls extends React.PureComponent<Props, State> {
                   variant="primary"
                   aria-label="First group"
                   onClick={this.onControlsButton}
-                  // // written to prevent event propagation
+                  onMouseUp={this.buttonStopPropagation}
+                  onTouchEnd={this.buttonStopPropagation}
                   onMouseDown={this.buttonStopPropagation}
                   onTouchStart={this.buttonStopPropagation}
                 >

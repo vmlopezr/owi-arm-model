@@ -10,13 +10,12 @@ interface Props {
   min?: number;
   valUnit?: string;
 }
-const ValueSlider = (props: Props) => {
+const ValueSlider = React.memo((props: Props) => {
   const [value, setValue] = React.useState(
     props.defaultVal ? props.defaultVal : 0,
   );
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('slider change');
     setValue(parseInt(event.target.value));
     props.updateValue(props.index, parseInt(event.target.value));
     event.stopPropagation();
@@ -41,7 +40,7 @@ const ValueSlider = (props: Props) => {
     event.stopPropagation();
   };
   const valUnit = props.valUnit ? props.valUnit : '';
-  console.log('slider rendering');
+
   return (
     <div className="slider-container">
       <div className="slider-label">
@@ -68,5 +67,5 @@ const ValueSlider = (props: Props) => {
       </div>
     </div>
   );
-};
+});
 export default ValueSlider;
