@@ -16,6 +16,7 @@ const ValueSlider = (props: Props) => {
   );
 
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('slider change');
     setValue(parseInt(event.target.value));
     props.updateValue(props.index, parseInt(event.target.value));
     event.stopPropagation();
@@ -40,6 +41,7 @@ const ValueSlider = (props: Props) => {
     event.stopPropagation();
   };
   const valUnit = props.valUnit ? props.valUnit : '';
+  console.log('slider rendering');
   return (
     <div className="slider-container">
       <div className="slider-label">

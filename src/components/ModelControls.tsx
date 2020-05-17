@@ -1,8 +1,15 @@
 import React from 'react';
+import Button from 'react-bootstrap/Button';
+import ButtonGroup from 'react-bootstrap/ButtonGroup';
+import ButtonToolbar from 'react-bootstrap/ButtonToolbar';
+import '../App.scss';
+import AnimatePanel from './AnimatePanel';
 import ValueSlider from './ValueSlider';
 
 interface Props {
   updateConfig(index: number, value: number): void;
+  updateAxis(value: boolean): void;
+  updateLabel(value: boolean): void;
 }
 interface Position {
   x: number;
@@ -18,6 +25,9 @@ interface State {
   width: string | number;
   height: string | number;
   overflow: string;
+  showControls: boolean;
+  showAxes: boolean;
+  showLabels: boolean;
 }
 const controlConfig = [
   {
@@ -50,8 +60,8 @@ const controlConfig = [
   },
   { label: 'Gripper', defaultVal: 50, max: 100, min: 0, valUnit: '%' },
 ];
-const backgroundLargeScreen = '#222831e0';
-const backgroundHover = '#222831c0';
+const defaultBackground = '#222831da';
+const backgroundHover = '#222831a0';
 
 class ModelControls extends React.PureComponent<Props, State> {
   containerRef: React.RefObject<HTMLDivElement>;
@@ -73,12 +83,15 @@ class ModelControls extends React.PureComponent<Props, State> {
       dragging: false,
       pos: { x: 0, y: 0 },
       portraitPos: { x: 0, y: innerHeight * 0.55 },
-      landscapePos: { x: innerHeight * 0.5, y: 0 },
+      landscapePos: { x: innerHeight * 0.6, y: 0 },
       rel: { x: 0, y: 0 },
-      backgroundColor: backgroundLargeScreen,
+      backgroundColor: defaultBackground,
       width: '35%',
       height: '100%',
       overflow: 'auto',
+      showAxes: true,
+      showControls: true,
+      showLabels: true,
     };
   }
   componentDidMount() {
@@ -97,7 +110,7 @@ class ModelControls extends React.PureComponent<Props, State> {
       // Update position of the controls div based on orientation
       this.setState({
         pos: isPortrait ? this.state.portraitPos : this.state.landscapePos,
-        backgroundColor: backgroundLargeScreen,
+        backgroundColor: defaultBackground,
         width: isPortrait ? '100%' : '50%',
         height: isPortrait ? '45%' : '100%',
       });
@@ -115,12 +128,13 @@ class ModelControls extends React.PureComponent<Props, State> {
             x: offsetLeft >= xDelta ? xDelta : offsetLeft,
             y: 0,
           },
-          backgroundColor: backgroundLargeScreen,
+          backgroundColor: defaultBackground,
         });
       }
     }
   };
   onMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    console.log('controls mouse down');
     if (event.button !== 0) return;
     const top = event.currentTarget.offsetTop;
     const left = event.currentTarget.offsetLeft;
@@ -138,9 +152,9 @@ class ModelControls extends React.PureComponent<Props, State> {
     event.stopPropagation();
   };
   onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    console.log('mouse up');
+    console.log('controls mouse up');
     event.currentTarget.style.cursor = 'auto';
-    this.setState({ dragging: false, backgroundColor: backgroundLargeScreen });
+    this.setState({ dragging: false, backgroundColor: defaultBackground });
     event.stopPropagation();
   };
   onMouseMove = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
@@ -171,10 +185,11 @@ class ModelControls extends React.PureComponent<Props, State> {
   };
   onMouseLeave = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.currentTarget.style.cursor = 'auto';
-    this.setState({ dragging: false, backgroundColor: backgroundLargeScreen });
+    this.setState({ dragging: false, backgroundColor: defaultBackground });
     event.stopPropagation();
   };
   onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
+    console.log('touch start');
     const top = event.currentTarget.offsetTop;
     const left = event.currentTarget.offsetLeft;
     const { pageX, pageY } = event.touches[0];
@@ -196,14 +211,14 @@ class ModelControls extends React.PureComponent<Props, State> {
     if (isPortrait) {
       this.setState({
         dragging: false,
-        backgroundColor: backgroundLargeScreen,
+        backgroundColor: defaultBackground,
         portraitPos: this.state.pos,
         overflow: 'auto',
       });
     } else {
       this.setState({
         dragging: false,
-        backgroundColor: backgroundLargeScreen,
+        backgroundColor: defaultBackground,
         landscapePos: this.state.pos,
         overflow: 'auto',
       });
@@ -235,43 +250,157 @@ class ModelControls extends React.PureComponent<Props, State> {
     });
     event.stopPropagation();
   };
+  onControlsButton = (
+    event:
+      | React.MouseEvent<HTMLButtonElement, MouseEvent>
+      | React.TouchEvent<HTMLButtonElement>,
+  ) => {
+    this.setState({ showControls: !this.state.showControls });
+    event.currentTarget.blur();
+    event.stopPropagation();
+    event.preventDefault();
+  };
+  onAxesButton = (
+    event:
+      | React.MouseEvent<HTMLButtonElement, MouseEvent>
+      | React.TouchEvent<HTMLButtonElement>,
+  ) => {
+    event.currentTarget.blur();
+    const axes = !this.state.showAxes;
+    this.props.updateAxis(axes);
+    this.setState({ showAxes: axes });
+    event.stopPropagation();
+  };
+  onClickLabel = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    event.currentTarget.blur();
+    const label = !this.state.showLabels;
+    this.setState({ showLabels: label });
+    this.props.updateLabel(label);
+    event.stopPropagation();
+  };
+  showControls = (
+    event:
+      | React.TouchEvent<HTMLDivElement>
+      | React.MouseEvent<HTMLDivElement, MouseEvent>,
+  ) => {
+    this.setState({
+      showControls: true,
+      backgroundColor: defaultBackground,
+    });
+    event.stopPropagation();
+  };
+  // written to prevent event propagatiion
+  buttonStopPropagation = (
+    event:
+      | React.MouseEvent<HTMLButtonElement, MouseEvent>
+      | React.TouchEvent<HTMLButtonElement>,
+  ) => {
+    event.stopPropagation();
+  };
+  pressShowControls = (event: React.TouchEvent<HTMLDivElement>) => {
+    console.log('button event start');
+    this.setState({ backgroundColor: backgroundHover });
+    event.stopPropagation();
+  };
   render() {
+    console.log('controls rendering');
     return (
-      <div
-        ref={this.containerRef}
-        className="controls disable-selection"
-        onMouseDown={this.onMouseDown}
-        onMouseMove={this.onMouseMove}
-        onMouseUp={this.onMouseUp}
-        onMouseLeave={this.onMouseLeave}
-        onTouchStart={this.onTouchStart}
-        onTouchMove={this.onTouchMove}
-        onTouchEnd={this.onTouchEnd}
-        unselectable="on"
-        style={{
-          left: this.state.pos.x + 'px',
-          top: this.state.pos.y + 'px',
-          width: this.state.width,
-          height: this.state.height,
-          backgroundColor: this.state.backgroundColor,
-          minWidth: this.onMobile ? undefined : 300,
-          overflow: this.state.overflow,
-        }}
-      >
-        <h1>OWI Robot Arm: Controls</h1>
-        <p id="text">
-          Use the sliders move the associated robot arm joints. Click, touch,
-          drag or scroll on the model screen to transform the display. Press and
-          hold to drag the panel.
-        </p>
-        {controlConfig.map((config, index) => (
-          <ValueSlider
-            key={index}
-            {...config}
-            updateValue={this.props.updateConfig}
-            index={index}
-          />
-        ))}
+      <div>
+        <div
+          ref={this.containerRef}
+          className="controls disable-selection"
+          onMouseDown={this.onMouseDown}
+          onMouseMove={this.onMouseMove}
+          onMouseUp={this.onMouseUp}
+          onMouseLeave={this.onMouseLeave}
+          onTouchStart={this.onTouchStart}
+          onTouchMove={this.onTouchMove}
+          onTouchEnd={this.onTouchEnd}
+          unselectable="on"
+          style={{
+            left: this.state.pos.x + 'px',
+            top: this.state.pos.y + 'px',
+            width: this.state.width,
+            height: this.state.height,
+            backgroundColor: this.state.backgroundColor,
+            minWidth: this.onMobile ? undefined : 400,
+            overflow: this.state.overflow,
+            display: this.state.showControls ? 'block' : 'none',
+          }}
+        >
+          <h1>OWI Robot Arm: Controls</h1>
+          <p id="text">
+            Use the sliders move the associated robot arm joints. Click, touch,
+            drag or scroll on the model screen to transform the display. Press
+            and hold to drag the panel.
+          </p>
+          {controlConfig.map((config, index) => (
+            <ValueSlider
+              key={index}
+              {...config}
+              updateValue={this.props.updateConfig}
+              index={index}
+            />
+          ))}
+          <div className="button-container">
+            <ButtonToolbar aria-label="Toolbar with button groups">
+              <ButtonGroup className="mr-2">
+                <Button
+                  size="lg"
+                  variant="primary"
+                  aria-label="First group"
+                  onClick={this.onControlsButton}
+                  // // written to prevent event propagation
+                  onMouseDown={this.buttonStopPropagation}
+                  onTouchStart={this.buttonStopPropagation}
+                >
+                  Hide Controls
+                </Button>
+              </ButtonGroup>
+              <ButtonGroup className="mr-2">
+                <Button
+                  size="lg"
+                  variant="primary"
+                  aria-label="Second group"
+                  onClick={this.onAxesButton}
+                  onMouseDown={this.buttonStopPropagation}
+                  onTouchStart={this.buttonStopPropagation}
+                  onMouseUp={this.buttonStopPropagation}
+                  onTouchEnd={this.buttonStopPropagation}
+                >
+                  {this.state.showAxes ? 'Hide Axes' : 'Show Axes'}
+                </Button>
+              </ButtonGroup>
+              <ButtonGroup>
+                <Button
+                  size="lg"
+                  variant="primary"
+                  aria-label="Third group"
+                  onClick={this.onClickLabel}
+                  onMouseDown={this.buttonStopPropagation}
+                  onMouseUp={this.buttonStopPropagation}
+                  onTouchStart={this.buttonStopPropagation}
+                  onTouchEnd={this.buttonStopPropagation}
+                >
+                  {this.state.showLabels ? 'Hide Labels' : 'Show Labels'}
+                </Button>
+              </ButtonGroup>
+            </ButtonToolbar>
+          </div>
+          <AnimatePanel />
+        </div>
+        <div
+          className={'show-controls disable-selection'}
+          style={{
+            display: this.state.showControls ? 'none' : 'block',
+            backgroundColor: this.state.backgroundColor,
+          }}
+          onClick={this.showControls}
+          onTouchEnd={this.showControls}
+          onTouchStart={this.pressShowControls}
+        >
+          <h4>Show Controls</h4>
+        </div>
       </div>
     );
   }

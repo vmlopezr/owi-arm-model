@@ -6,17 +6,17 @@ import '../App.scss';
 
 interface Props {
   robotValues: number[];
+  showAxis: boolean;
+  showLabels: boolean;
 }
-interface SpriteColor {
-  r: number;
-  g: number;
-  b: number;
-  a: number;
+interface State {
+  showAxis: boolean;
+  showLabels: boolean;
 }
-const defaultFontBackground = { r: 255, g: 255, b: 255, a: 0.1 };
-const redColor = { r: 255, g: 0, b: 0, a: 1 };
-const greenColor = { r: 0, g: 255, b: 0, a: 1 };
-const blueColor = { r: 0, g: 0, b: 255, a: 1 };
+const defaultFontBackground = '#ffffff';
+const redColor = '#ff0000';
+const greenColor = '#007000';
+const blueColor = '#00b0ff';
 const defSpriteParams: SpriteParam = {
   fontsize: 100,
   fontface: 'Roboto',
@@ -26,61 +26,59 @@ const xParams: SpriteParam = {
   fontsize: 100,
   textColor: redColor,
   borderColor: redColor,
+  backgroundColor: defaultFontBackground,
 };
 const yParams: SpriteParam = {
   fontsize: 100,
   textColor: greenColor,
   borderColor: greenColor,
+  backgroundColor: defaultFontBackground,
 };
 const zParams: SpriteParam = {
   fontsize: 100,
   textColor: blueColor,
   borderColor: blueColor,
+  backgroundColor: defaultFontBackground,
 };
 interface SpriteParam {
   fontface?: string;
   fontsize?: number;
   borderThickness?: number;
-  borderColor?: SpriteColor;
-  backgroundColor?: SpriteColor;
-  textColor?: SpriteColor;
+  borderColor?: string;
+  backgroundColor?: string;
+  textColor?: string;
 }
-export default class ThreeContainer extends Component<Props> {
-  threeRootElement: React.RefObject<HTMLDivElement>;
-  scene: THREE.Scene;
-  camera: THREE.PerspectiveCamera;
-  renderer: THREE.WebGLRenderer;
-  controls: OrbitControls;
-  frameId: number;
-  light: THREE.PointLight;
-  joint: THREE.Group[];
-  jointAxisStart: THREE.Object3D[];
-  jointAxisEnd: THREE.Object3D[];
-  origins: THREE.Object3D[];
-  gripper: THREE.Object3D[];
-  gripperPositions: THREE.Object3D[];
-  yMat: THREE.MeshStandardMaterial;
-  blackMat: THREE.MeshStandardMaterial;
-  prevAngles: number[];
-  labels: THREE.Sprite[];
+export default class ThreeContainer extends Component<Props, State> {
+  threeRootElement = React.createRef<HTMLDivElement>();
+  scene = new THREE.Scene();
+  camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  controls = new OrbitControls(this.camera, this.renderer.domElement);
+  frameId = 0;
+  light = new THREE.PointLight(0xffffff);
+  joint: THREE.Group[] = [];
+  jointAxisStart: THREE.Object3D[] = [];
+  jointAxisEnd: THREE.Object3D[] = [];
+  origins: THREE.Object3D[] = [];
+  gripper: THREE.Object3D[] = [];
+  gripperPositions: THREE.Object3D[] = [];
+  endEffector = new THREE.Object3D();
+  yMat = new THREE.MeshStandardMaterial({ color: 0xffdf20 });
+  blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+  prevAngles = [0, 0, 0, 0];
+  labels: THREE.Sprite[] = [];
+  axis = new THREE.AxesHelper(30);
   constructor(props: any) {
     super(props);
-    this.frameId = 0;
-    this.threeRootElement = React.createRef<HTMLDivElement>();
-    this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.state = {
+      showLabels: true,
+      showAxis: true,
+    };
+
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    this.light = new THREE.PointLight(0xffffff);
-    this.prevAngles = [0, 0, 0, 0];
-    this.camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.update();
-    this.joint = [];
-    // Use the join axis arrays to calculate the rotation axis
-    this.jointAxisStart = [];
-    this.jointAxisEnd = [];
-    this.origins = [];
-    this.gripperPositions = [];
-    this.labels = [];
+    // Use the join axis arrays to calculate the rotation axis for joints
+
     for (let i = 0; i < 4; i++) {
       this.joint.push(new THREE.Group());
       this.gripperPositions.push(new THREE.Object3D());
@@ -90,23 +88,30 @@ export default class ThreeContainer extends Component<Props> {
         this.origins.push(new THREE.Object3D());
       }
     }
-
-    this.gripper = [];
-    this.scene = new THREE.Scene();
-    this.yMat = new THREE.MeshStandardMaterial({ color: 0xffdf20 });
-    this.blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
   }
-  shouldComponentUpdate(prevProps: Props) {
-    if (prevProps.robotValues[0] !== this.props.robotValues[0]) {
-      this.rotateJoint1();
-    } else if (prevProps.robotValues[1] !== this.props.robotValues[1]) {
-      this.rotateJoint2();
+  UNSAFE_componentWillReceiveProps(prevProps: Props) {
+    if (prevProps.robotValues[1] !== this.props.robotValues[1]) {
+      this.rotateJoint2(this.props.robotValues[1], prevProps.robotValues[1]);
     } else if (prevProps.robotValues[2] !== this.props.robotValues[2]) {
-      this.rotateJoints3();
+      this.rotateJoints3(this.props.robotValues[2], prevProps.robotValues[2]);
     } else if (prevProps.robotValues[3] !== this.props.robotValues[3]) {
-      this.rotateJoints4();
+      this.rotateJoints4(this.props.robotValues[3], prevProps.robotValues[3]);
     } else if (prevProps.robotValues[4] !== this.props.robotValues[4]) {
       this.updateGripper();
+    } else if (prevProps.showAxis !== this.props.showAxis) {
+      console.log('updated axis');
+    } else if (prevProps.showLabels !== this.props.showLabels) {
+      console.log('update labels');
+    }
+  }
+  // Canvas does not need to re-render. Only need to receive data on
+  // Componentdidreceiveprops to update model with its animate() loop.
+  shouldComponentUpdate(prevProps: Props, prevState: State) {
+    console.log(
+      `should component update prev: ${prevProps.robotValues[0]} new: ${this.props.robotValues[0]}`,
+    );
+    if (prevProps.robotValues[0] !== this.props.robotValues[0]) {
+      this.rotateJoint1(this.props.robotValues[0], prevProps.robotValues[0]);
     }
     return false;
   }
@@ -308,11 +313,15 @@ export default class ThreeContainer extends Component<Props> {
       new THREE.Mesh(this.createBox(0.7, 6, 0.7), this.blackMat),
     );
     this.gripper[1].position.set(0, 23.5, 0.7);
+
     this.gripper.forEach((value) => this.joint[3].add(value));
     this.gripperPositions[0].position.set(0, 23.5, -0.15);
     this.gripperPositions[1].position.set(0, 23.5, -0.7);
     this.gripperPositions[2].position.set(0, 23.5, 0.15);
     this.gripperPositions[3].position.set(0, 23.5, 0.7);
+
+    this.endEffector.position.set(0, 26.5, 0);
+    this.joint[3].add(this.endEffector);
     this.gripperPositions.forEach((value) => this.joint[3].add(value));
   };
   createLabels = () => {
@@ -338,9 +347,9 @@ export default class ThreeContainer extends Component<Props> {
       this.makeTextSprite('Gripper', defSpriteParams, 0, 23.5, 3.5),
     );
     this.joint[3].add(this.labels[4]);
-    this.labels.push(this.makeTextSprite('x', xParams, 40, 0, 0));
-    this.labels.push(this.makeTextSprite('y', yParams, 0, 40, 0));
-    this.labels.push(this.makeTextSprite('z', zParams, 0, 0, 40));
+    this.labels.push(this.makeTextSprite('x', xParams, 30, 0, 0));
+    this.labels.push(this.makeTextSprite('y', yParams, 0, 30, 0));
+    this.labels.push(this.makeTextSprite('z', zParams, 0, 0, 30));
     this.scene.add(this.labels[5]);
     this.scene.add(this.labels[6]);
     this.scene.add(this.labels[7]);
@@ -366,41 +375,34 @@ export default class ThreeContainer extends Component<Props> {
   ): THREE.BoxGeometry => {
     return new THREE.BoxGeometry(width, height, depth);
   };
-  rotateJoint1 = () => {
-    const angle = this.props.robotValues[0] - this.prevAngles[0];
-    this.joint[0].rotateY((angle * Math.PI) / 180);
-    this.prevAngles[0] = this.props.robotValues[0];
+  rotateJoint1 = (newAngle: number, prevAngle: number) => {
+    const angle = this.rad(newAngle - prevAngle);
+    this.joint[0].rotateY(angle);
   };
-  rotateJoint2 = () => {
-    const angle = this.rad(this.props.robotValues[1] - this.prevAngles[1]);
+  rotateJoint2 = (newAngle: number, prevAngle: number) => {
+    const angle = this.rad(newAngle - prevAngle);
     const axis = this.jointAxisStart[0].position
       .clone()
       .sub(this.jointAxisEnd[0].position);
     const point = this.origins[0].position;
     this.rotate(this.joint[1], point, axis, angle);
-    // Store angle
-    this.prevAngles[1] = this.props.robotValues[1];
   };
 
-  rotateJoints3 = () => {
-    const angle = this.rad(this.props.robotValues[2] - this.prevAngles[2]);
+  rotateJoints3 = (newAngle: number, prevAngle: number) => {
+    const angle = this.rad(newAngle - prevAngle);
     const axis = this.jointAxisStart[1].position
       .clone()
       .sub(this.jointAxisEnd[1].position);
     const point = this.origins[1].position;
     this.rotate(this.joint[2], point, axis, angle);
-
-    this.prevAngles[2] = this.props.robotValues[2];
   };
-  rotateJoints4 = () => {
-    const angle = this.rad(this.props.robotValues[3] - this.prevAngles[3]);
+  rotateJoints4 = (newAngle: number, prevAngle: number) => {
+    const angle = this.rad(newAngle - prevAngle);
     const axis = this.jointAxisStart[2].position
       .clone()
       .sub(this.jointAxisEnd[2].position);
     const point = this.origins[2].position;
     this.rotate(this.joint[3], point, axis, angle);
-
-    this.prevAngles[3] = this.props.robotValues[3];
   };
   updateGripper = () => {
     const leftDelta = this.gripperPositions[1].position
@@ -424,8 +426,7 @@ export default class ThreeContainer extends Component<Props> {
   rad = (angle: number): number => (angle * Math.PI) / 180;
 
   createDisplay = (): void => {
-    const axes = new THREE.AxesHelper(40);
-    this.scene.add(axes);
+    this.scene.add(this.axis);
 
     // Add a grid on the xz plane
     const gridhelper = new THREE.GridHelper(60, 60);
@@ -436,8 +437,8 @@ export default class ThreeContainer extends Component<Props> {
     this.scene.add(this.light);
 
     // Set camera
-    this.camera?.position.set(15, 15, 15);
-    // this.camera?.lookAt(10, 40, 0);
+    this.camera?.position.set(0, 33, 40);
+    this.camera?.lookAt(this.scene.position);
   };
   addText = (
     message: string,
@@ -502,15 +503,11 @@ export default class ThreeContainer extends Component<Props> {
     const fontface = params.fontface ? params.fontface : 'Arial';
     const fontsize = params.fontsize ? params.fontsize : 18;
     const borderThickness = params.borderThickness ? params.borderThickness : 4;
-    const borderColor = params.borderColor
-      ? params.borderColor
-      : { r: 0, g: 0, b: 0, a: 1.0 };
+    const borderColor = params.borderColor ? params.borderColor : '#000000';
     const backgroundColor = params.backgroundColor
       ? params.backgroundColor
-      : { r: 255, g: 255, b: 255, a: 1.0 };
-    const textColor = params.textColor
-      ? params.textColor
-      : { r: 0, g: 0, b: 0, a: 1.0 };
+      : '#ffffff00';
+    const textColor = params.textColor ? params.textColor : '#000000';
 
     const canvas = document.createElement('canvas');
 
@@ -522,26 +519,8 @@ export default class ThreeContainer extends Component<Props> {
     const metrics = context.measureText(message);
     const textWidth = metrics.width;
 
-    context.fillStyle =
-      'rgba(' +
-      backgroundColor.r +
-      ',' +
-      backgroundColor.g +
-      ',' +
-      backgroundColor.b +
-      ',' +
-      backgroundColor.a +
-      ')';
-    context.strokeStyle =
-      'rgba(' +
-      borderColor.r +
-      ',' +
-      borderColor.g +
-      ',' +
-      borderColor.b +
-      ',' +
-      borderColor.a +
-      ')';
+    context.fillStyle = backgroundColor;
+    context.strokeStyle = borderColor;
 
     context.lineWidth = borderThickness;
     this.roundRect(
@@ -553,14 +532,7 @@ export default class ThreeContainer extends Component<Props> {
       20,
     );
 
-    context.fillStyle =
-      'rgba(' +
-      textColor.r +
-      ', ' +
-      textColor.g +
-      ', ' +
-      textColor.b +
-      ', 1.0)';
+    context.fillStyle = textColor;
 
     context.fillText(message, borderThickness + 15, fontsize + borderThickness);
 
@@ -615,6 +587,7 @@ export default class ThreeContainer extends Component<Props> {
     this.frameId = requestAnimationFrame(this.animate);
   };
   render() {
+    console.log('rendering three js');
     return <div ref={this.threeRootElement} className="threeCanvas" />;
   }
 }
