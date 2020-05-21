@@ -1,0 +1,19 @@
+.accordion-item {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border: 1px solid #000000;
+    color: #000000;
+    border-radius: 1px;
+}
+.accordion-item p {
+    display: flex;
+    flex: 2;
+    align-items: flex-start;
+    justify-content: center;
+}
+.accordion-item input {
+    display: flex;
+    flex: 1;
+    background-color: #cbcbcb;
+}

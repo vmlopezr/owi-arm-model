@@ -43,7 +43,48 @@ export interface ThreeModelObjects {
   origins: THREE.Object3D[];
   gripper: THREE.Object3D[];
   gripperPositions: THREE.Object3D[];
-  endEffector: THREE.Object3D;
+  endEffector: THREE.Mesh;
+  robotBase: THREE.Mesh;
   labels: THREE.Sprite[];
   axis: THREE.AxesHelper;
+  lines: THREE.Line[];
+  boundingBox1: THREE.Box3 | null;
+  boundingBox2: THREE.Box3 | null;
 }
+export interface HUDDisplay {
+  camera: THREE.OrthographicCamera | null;
+  bitMap: CanvasRenderingContext2D;
+  sceneHUD: THREE.Scene;
+  texture: THREE.Texture | null;
+}
+export const ControlConfig = [
+  {
+    label: 'Joint 1',
+    defaultVal: 0,
+    max: 135,
+    min: -135,
+    valUnit: '\u00b0',
+  },
+  {
+    label: 'Joint 2',
+    defaultVal: 0,
+    max: 75,
+    min: -75,
+    valUnit: '\u00b0',
+  },
+  {
+    label: 'Joint 3',
+    defaultVal: 0,
+    max: 135,
+    min: -135,
+    valUnit: '\u00b0',
+  },
+  {
+    label: 'Joint 4',
+    defaultVal: 0,
+    max: 60,
+    min: -60,
+    valUnit: '\u00b0',
+  },
+  { label: 'Gripper', defaultVal: 0, max: 100, min: 0, valUnit: '%' },
+];

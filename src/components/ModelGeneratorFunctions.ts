@@ -9,10 +9,11 @@ import {
   zParams,
 } from './constants';
 import { blackMat, yMat } from './ThreeContainer';
+
 const createCylinder = (radius: number, height: number) => {
   return new THREE.CylinderGeometry(radius, radius, height, 30);
 };
-const createBox = (width: number, height: number, depth: number) => {
+export const createBox = (width: number, height: number, depth: number) => {
   return new THREE.BoxGeometry(width, height, depth);
 };
 const roundRect = (
@@ -137,6 +138,8 @@ export const constructJoint1 = (object: ThreeModelObjects) => {
 
   object.joint[0].add(jointCylinder[0]);
   object.joint[0].add(jointCylinder[1]);
+  object.robotBase.position.set(0, 2, -4);
+  object.scene.add(object.robotBase);
 };
 export const constructJoint2 = (object: ThreeModelObjects) => {
   const joint2Bar = [];
@@ -162,25 +165,8 @@ export const constructJoint2 = (object: ThreeModelObjects) => {
   object.joint[1].add(object.jointAxisStart[0]);
   object.joint[1].add(object.jointAxisEnd[0]);
   object.joint[1].add(object.origins[0]);
-  const points = [];
-  points.push(new THREE.Vector3(0, 5.5, 0));
-  points.push(new THREE.Vector3(0, 5.5, 4.75));
-  const line = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints(points),
-    new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
-  );
-  object.joint[1].add(line);
 };
 export const constructJoint3 = (object: ThreeModelObjects) => {
-  const points = [];
-  points.push(new THREE.Vector3(0, 18.5, 0));
-  points.push(new THREE.Vector3(0, 18.5, 4.75));
-  const line3 = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints([points[0], points[1]]),
-    new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
-  );
-  object.joint[2].add(line3);
-
   const armBody = new THREE.Mesh(createBox(3, 8, 3), yMat);
   armBody.position.set(0, 16, 0);
   object.joint[2].add(armBody);
@@ -210,13 +196,6 @@ export const constructJoint3 = (object: ThreeModelObjects) => {
   object.joint[2].add(object.jointAxisStart[1]);
   object.joint[2].add(object.jointAxisEnd[1]);
   object.joint[2].add(object.origins[1]);
-  points.push(new THREE.Vector3(0, 13.5, 0));
-  points.push(new THREE.Vector3(0, 13.5, 4.75));
-  const line2 = new THREE.Line(
-    new THREE.BufferGeometry().setFromPoints([points[2], points[3]]),
-    new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
-  );
-  object.joint[2].add(line2);
 };
 export const constructJoint4 = (object: ThreeModelObjects) => {
   const jointCylinder = [];
@@ -255,7 +234,6 @@ export const constructGripper = (object: ThreeModelObjects) => {
   object.gripperPositions[1].position.set(0, 23.5, -0.7);
   object.gripperPositions[2].position.set(0, 23.5, 0.15);
   object.gripperPositions[3].position.set(0, 23.5, 0.7);
-
   object.endEffector.position.set(0, 26.5, 0);
   object.joint[3].add(object.endEffector);
   object.gripperPositions.forEach((value) => object.joint[3].add(value));
@@ -264,21 +242,63 @@ export const createLabels = (object: ThreeModelObjects) => {
   // Create joint labels
   object.labels.push(makeTextSprite('Joint 1', defSpriteParams, -10.5, 1.5, 0));
   object.scene.add(object.labels[0]);
-  object.labels.push(makeTextSprite('Joint 2', defSpriteParams, 0, 5.5, 5.5));
+  object.labels.push(makeTextSprite('Joint 2', defSpriteParams, 0, 5.5, 10.5));
   object.labels[1].rotateY(-Math.PI / 2);
   object.joint[0].add(object.labels[1]);
-  object.labels.push(makeTextSprite('Joint 3', defSpriteParams, 0, 13.5, 5.5));
+  object.labels.push(makeTextSprite('Joint 3', defSpriteParams, 0, 13.5, 10.5));
   object.joint[1].add(object.labels[2]);
-  object.labels.push(makeTextSprite('Joint 4', defSpriteParams, 0, 18.5, 5.5));
+  object.labels.push(makeTextSprite('Joint 4', defSpriteParams, 0, 18.5, 10.5));
   object.joint[2].add(object.labels[3]);
-  object.labels.push(makeTextSprite('Gripper', defSpriteParams, 0, 23.5, 3.5));
+  object.labels.push(makeTextSprite('Gripper', defSpriteParams, 0, 23.5, 8.5));
   object.joint[3].add(object.labels[4]);
   object.labels.push(makeTextSprite('x', xParams, 30, 0, 0));
   object.labels.push(makeTextSprite('y', yParams, 0, 30, 0));
   object.labels.push(makeTextSprite('z', zParams, 0, 0, 30));
+
   object.scene.add(object.labels[5]);
   object.scene.add(object.labels[6]);
   object.scene.add(object.labels[7]);
+
+  // Create Lines
+  const points = [];
+  points.push(new THREE.Vector3(0, 5.5, 0));
+  points.push(new THREE.Vector3(0, 5.5, 9.75));
+  object.lines.push(
+    new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(points),
+      new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
+    ),
+  );
+  object.joint[1].add(object.lines[0]);
+
+  points.push(new THREE.Vector3(0, 18.5, 0));
+  points.push(new THREE.Vector3(0, 18.5, 9.75));
+  object.lines.push(
+    new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([points[2], points[3]]),
+      new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
+    ),
+  );
+  object.joint[2].add(object.lines[1]);
+
+  points.push(new THREE.Vector3(0, 13.5, 0));
+  points.push(new THREE.Vector3(0, 13.5, 9.75));
+  object.lines.push(
+    new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([points[4], points[5]]),
+      new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
+    ),
+  );
+  object.joint[2].add(object.lines[2]);
+  points.push(new THREE.Vector3(0, 22.5, 0));
+  points.push(new THREE.Vector3(0, 22.5, 7.95));
+  object.lines.push(
+    new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([points[6], points[7]]),
+      new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
+    ),
+  );
+  object.joint[3].add(object.lines[3]);
 };
 export const createDisplay = (object: ThreeModelObjects): void => {
   object.scene.add(object.axis);
