@@ -6,8 +6,8 @@ import { ControlConfig } from './constants';
 import ValueSlider from './ValueSlider';
 interface Props {
   updateConfig(index: number, value: number): void;
-  updateAxis(value: boolean): void;
-  updateLabel(value: boolean): void;
+  displayAxis(value: boolean): void;
+  displayLabel(value: boolean): void;
   resetPosition(): void;
   receiveRobotValues(): number[];
   startAnimation(robotValues: RobotValue[]): void;
@@ -66,7 +66,7 @@ class ModelControls extends React.Component<Props, State> {
       dragging: false,
       pos: { x: 0, y: 0 },
       portraitPos: { x: 0, y: innerHeight * 0.55 },
-      landscapePos: { x: innerHeight * 0.55, y: 0 },
+      landscapePos: { x: 0, y: 0 },
       rel: { x: 0, y: 0 },
       backgroundColor: defaultBackground,
       width: '35%',
@@ -251,7 +251,7 @@ class ModelControls extends React.Component<Props, State> {
   ) => {
     event.currentTarget.blur();
     const axes = !this.state.showAxes;
-    this.props.updateAxis(axes);
+    this.props.displayAxis(axes);
     this.setState({ showAxes: axes });
     event.stopPropagation();
   };
@@ -259,7 +259,7 @@ class ModelControls extends React.Component<Props, State> {
     event.currentTarget.blur();
     const label = !this.state.showLabels;
     this.setState({ showLabels: label });
-    this.props.updateLabel(label);
+    this.props.displayLabel(label);
     event.stopPropagation();
   };
   startAnimation = (robotValues: RobotValue[]) => {

@@ -33,6 +33,7 @@ const transparentMat = new THREE.MeshBasicMaterial({
 const frames = 100;
 export const yMat = new THREE.MeshStandardMaterial({ color: 0xffdf20 });
 export const blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+
 export default class ThreeContainer extends Component<Props, State> {
   threeRootElement = React.createRef<HTMLDivElement>();
   canvasRef = React.createRef<HTMLCanvasElement>();
@@ -47,7 +48,6 @@ export default class ThreeContainer extends Component<Props, State> {
     animation: false,
     positionSeq: [],
   };
-
   rotateFuncs: any[];
   handles: ThreeModelObjects = {
     scene: new THREE.Scene(),
@@ -157,8 +157,8 @@ export default class ThreeContainer extends Component<Props, State> {
     this.handles.robotBase.geometry.computeBoundingBox();
     this.handles.boundingBox1 = new THREE.Box3();
     this.handles.boundingBox2 = new THREE.Box3();
-    this.handles.boundingBox1.setFromObject(this.handles.robotBase);
-    this.handles.boundingBox2.setFromObject(this.handles.endEffector);
+    this.handles.boundingBox1?.setFromObject(this.handles.robotBase);
+    this.handles.boundingBox2?.setFromObject(this.handles.endEffector);
   };
   endEffectorIntersect = (): boolean => {
     return this.handles.boundingBox1?.containsPoint(
@@ -166,7 +166,7 @@ export default class ThreeContainer extends Component<Props, State> {
     ) as boolean;
   };
   // Canvas does not need to re-render. Only need to receive data on
-  // Componentdidreceiveprops to update model with its animate() loop.
+  // Componentdidreceiveprops to update model with its renderTHREE() loop.
   shouldComponentUpdate(nextProps: Props, nextState: State) {
     this.rotateFuncs.forEach((rotate, index) => {
       if (nextState.robotValues[index] !== this.prevState.robotValues[index]) {
@@ -175,13 +175,11 @@ export default class ThreeContainer extends Component<Props, State> {
       }
     });
     if (nextState.showAxis !== this.prevState.showAxis) {
-      console.log('updated axis');
       this.updateAxesVisibility(nextState.showAxis);
       this.prevState.showAxis = nextState.showAxis;
     }
     if (nextState.showLabels !== this.prevState.showLabels) {
-      console.log('update labels');
-      this.updateLabelVisibility(nextState.showLabels);
+      this.displayLabelVisibility(nextState.showLabels);
       this.prevState.showLabels = nextState.showLabels;
     }
     return false;
@@ -192,16 +190,13 @@ export default class ThreeContainer extends Component<Props, State> {
     config[index] = value;
     this.setState({ robotValues: config });
   };
-  updateAxis = (value: boolean): void => {
+  displayAxis = (value: boolean): void => {
     this.setState({ showAxis: value });
-    console.log('axis config setstate');
   };
-  updateLabel = (value: boolean): void => {
+  displayLabel = (value: boolean): void => {
     this.setState({ showLabels: value });
-    console.log('label config setstate');
   };
   startAnimation = (robotValues: RobotValue[]) => {
-    console.log('start animation');
     if (robotValues.length !== 0) {
       this.newPosition = [...robotValues[0].values];
       this.angleDelta = [0, 0, 0, 0, 0];
@@ -217,7 +212,6 @@ export default class ThreeContainer extends Component<Props, State> {
   stopAnimation = () => {
     this.setState({ animation: false });
     this.resetPosition();
-    console.log(this.state.robotValues);
   };
   onSizeChange = () => {
     if (this.threeRootElement.current) {
@@ -298,7 +292,7 @@ export default class ThreeContainer extends Component<Props, State> {
       this.handles.labels[i].visible = value;
     }
   };
-  updateLabelVisibility = (value: boolean) => {
+  displayLabelVisibility = (value: boolean) => {
     for (let i = 0; i < 5; i++) {
       this.handles.labels[i].visible = value;
     }
@@ -309,7 +303,7 @@ export default class ThreeContainer extends Component<Props, State> {
   };
   start = () => {
     if (!this.frameId) {
-      this.frameId = requestAnimationFrame(this.animate);
+      this.frameId = requestAnimationFrame(this.renderTHREE);
     }
   };
   stop = () => {
@@ -323,20 +317,24 @@ export default class ThreeContainer extends Component<Props, State> {
     this.handles.endEffector.getWorldPosition(this.worldPos);
     return this.worldPos.clone();
   };
-
+  drawEffectCoordinates = () => {
+    this.handles.endEffector.getWorldPosition(this.worldPos);
+    const { x, y, z } = this.worldPos;
+    this.renderCoordinates(x.toFixed(1), y.toFixed(1), z.toFixed(1));
+  };
   updateView = () => {
     this.controls.update();
     this.light.position.copy(this.handles.camera.position);
     this.handles.renderer.render(this.handles.scene, this.handles.camera);
   };
-  animate = () => {
+  renderTHREE = () => {
     this.updateView();
     this.drawEffectCoordinates();
     if (this.state.animation) {
       this.drawPositions();
     }
 
-    this.frameId = requestAnimationFrame(this.animate);
+    this.frameId = requestAnimationFrame(this.renderTHREE);
   };
   drawPositions = () => {
     const { length } = this.state.positionSeq;
@@ -355,7 +353,6 @@ export default class ThreeContainer extends Component<Props, State> {
         if (this.crtIndex >= length) this.crtIndex = 0;
         this.nextIndex = this.crtIndex + 1;
         if (this.crtIndex === length - 1) this.nextIndex = 0;
-
         this.newPosition = [...positions[this.crtIndex].values];
       }
       // Set the angle change per position
@@ -378,19 +375,7 @@ export default class ThreeContainer extends Component<Props, State> {
       }
     }
   };
-  compareArrays = (arr1: number[], arr2: number[]) => {
-    if (arr1.length !== arr2.length) return false;
-    for (let i = 0; i < arr1.length; i++) {
-      if (arr1[i] !== arr2[i]) return false;
-    }
-    console.log('true');
-    return true;
-  };
-  drawEffectCoordinates = () => {
-    this.handles.endEffector.getWorldPosition(this.worldPos);
-    const { x, y, z } = this.worldPos;
-    this.renderCoordinates(x.toFixed(1), y.toFixed(1), z.toFixed(1));
-  };
+
   renderCoordinates = (x: string, y: string, z: string) => {
     const { width, height } = this.canvasCtx?.canvas as HTMLCanvasElement;
     this.canvasCtx?.clearRect(0, 0, width, height);
@@ -405,8 +390,8 @@ export default class ThreeContainer extends Component<Props, State> {
         <ModelControls
           resetPosition={this.resetPosition}
           updateConfig={this.updateArmConfig}
-          updateAxis={this.updateAxis}
-          updateLabel={this.updateLabel}
+          displayAxis={this.displayAxis}
+          displayLabel={this.displayLabel}
           receiveRobotValues={this.sendRobotValues}
           startAnimation={this.startAnimation}
           stopAnimation={this.stopAnimation}
