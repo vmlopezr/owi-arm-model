@@ -1,14 +1,13 @@
 import React, { memo, useState } from 'react';
-import { RobotValueKey } from './AnimatePanel';
 import './styles/TextInput.scss';
 interface TextInputProps {
   label: string;
   index: number;
-  property: RobotValueKey;
+  valueIndex: number;
   value: string;
   min: number;
   max: number;
-  updateRobotValue(index: number, key: RobotValueKey, value: number): void;
+  updateRobotValue(index: number, valueIndex: number, value: number): void;
 }
 const stopPropagation = (
   event:
@@ -39,7 +38,7 @@ const onBlur = (props: TextInputProps, value: string) => (
   }
   const numValue = parseInt(value);
   if (numValue >= props.min && numValue <= props.max)
-    props.updateRobotValue(props.index, props.property, numValue);
+    props.updateRobotValue(props.index, props.valueIndex, numValue);
   else {
     alert(
       `The value must be within the boundaries. \nMin: ${props.min}    Max: ${props.max}`,

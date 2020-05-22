@@ -6,6 +6,7 @@ interface Props {
   value: number;
   index: number;
   label: string;
+  disabled?: boolean;
   defaultVal?: number;
   max?: number;
   min?: number;
@@ -70,6 +71,7 @@ const ValueSlider = React.memo((props: Props) => {
         <input
           className="slider"
           type="range"
+          disabled={props.disabled ? true : false}
           value={props.value}
           onChange={handleSliderChange(
             props,

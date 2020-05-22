@@ -5,16 +5,14 @@ import './styles/AnimatePanel.scss';
 import { TextInput } from './TextInput';
 
 export interface RobotValue {
-  joint1: number;
-  joint2: number;
-  joint3: number;
-  joint4: number;
-  gripper: number;
+  values: number[];
 }
 interface Props {
   resetPosition(): void;
   receiveRobotValues(): number[];
-  getPositionList(robotValues: RobotValue[]): void;
+  startAnimation(robotValues: RobotValue[]): void;
+  stopAnimation(): void;
+  animate: boolean;
 }
 interface State {
   RobotValues: RobotValue[];
@@ -33,7 +31,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
     this.state = {
       select: false,
       selectedPositions: [],
-      RobotValues: [{ joint1: 0, joint2: 0, joint3: 0, joint4: 0, gripper: 0 }],
+      RobotValues: [{ values: [0, 0, 0, 0, 0] }],
     };
   }
   resetPosition = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
@@ -57,10 +55,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
   ) => {
     event.currentTarget.blur();
     this.setState({
-      RobotValues: [
-        ...this.state.RobotValues,
-        { joint1: 0, joint2: 0, joint3: 0, joint4: 0, gripper: 0 },
-      ],
+      RobotValues: [...this.state.RobotValues, { values: [0, 0, 0, 0, 0] }],
     });
     event.stopPropagation();
   };
@@ -126,11 +121,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
     const index = this.state.RobotValues.length - 1;
     const robotValueCopy = [...this.state.RobotValues];
     robotValueCopy[index] = {
-      joint1: position[0],
-      joint2: position[1],
-      joint3: position[2],
-      joint4: position[3],
-      gripper: position[4],
+      values: position,
     };
     this.setState({ RobotValues: robotValueCopy });
   };
@@ -139,14 +130,22 @@ class AnimatePanel extends React.PureComponent<Props, State> {
       | React.MouseEvent<HTMLButtonElement, MouseEvent>
       | React.TouchEvent<HTMLButtonElement>,
   ) => {
-    this.props.getPositionList(this.state.RobotValues);
+    this.props.startAnimation(this.state.RobotValues);
     event.currentTarget.blur();
     event.stopPropagation();
   };
-
-  updateRobotValue = (index: number, key: RobotValueKey, value: number) => {
+  stopAnimation = (
+    event:
+      | React.MouseEvent<HTMLButtonElement, MouseEvent>
+      | React.TouchEvent<HTMLButtonElement>,
+  ) => {
+    this.props.stopAnimation();
+    event.currentTarget.blur();
+    event.stopPropagation();
+  };
+  updateRobotValue = (index: number, valueIndex: number, value: number) => {
     const robotValuesCopy = [...this.state.RobotValues];
-    robotValuesCopy[index][key] = value;
+    robotValuesCopy[index].values[valueIndex] = value;
     this.setState({ RobotValues: robotValuesCopy });
   };
   renderAccordion = () => {
@@ -172,46 +171,46 @@ class AnimatePanel extends React.PureComponent<Props, State> {
                 body: (
                   <div>
                     <TextInput
-                      value={item.joint1.toString()}
+                      value={item.values[0].toString()}
                       label={'Joint 1'}
                       index={index}
-                      property={'joint1'}
+                      valueIndex={0}
                       updateRobotValue={this.updateRobotValue}
                       min={-135}
                       max={135}
                     />
                     <TextInput
-                      value={item.joint2.toString()}
+                      value={item.values[1].toString()}
                       label={'Joint 2'}
                       index={index}
-                      property={'joint2'}
+                      valueIndex={1}
                       updateRobotValue={this.updateRobotValue}
                       min={-85}
                       max={85}
                     />
                     <TextInput
-                      value={item.joint3.toString()}
+                      value={item.values[2].toString()}
                       label={'Joint 3'}
                       index={index}
-                      property={'joint3'}
+                      valueIndex={2}
                       updateRobotValue={this.updateRobotValue}
                       min={-135}
                       max={135}
                     />
                     <TextInput
-                      value={item.joint4.toString()}
+                      value={item.values[3].toString()}
                       label={'Joint 4'}
                       index={index}
-                      property={'joint4'}
+                      valueIndex={3}
                       updateRobotValue={this.updateRobotValue}
                       min={-60}
                       max={60}
                     />
                     <TextInput
-                      value={item.gripper.toString()}
+                      value={item.values[4].toString()}
                       label={'Gripper'}
                       index={index}
-                      property={'gripper'}
+                      valueIndex={4}
                       updateRobotValue={this.updateRobotValue}
                       min={0}
                       max={100}
@@ -227,6 +226,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
   };
   render() {
     const { select } = this.state;
+    const { animate } = this.props;
     return (
       <div>
         <div className="positions-container">
@@ -240,6 +240,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
               size="lg"
               aria-label="positions-button"
               variant="primary"
+              disabled={animate}
               onClick={select ? this.cancelSelect : this.setSelectState}
               onMouseUp={this.stopPropagation}
               onTouchEnd={this.stopPropagation}
@@ -250,6 +251,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
             </Button>
             <Button
               size="lg"
+              disabled={animate}
               aria-label="positions-button"
               variant="primary"
               onClick={select ? this.onDeleteItems : this.onAddItem}
@@ -262,7 +264,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
             </Button>
             <Button
               size="lg"
-              disabled={select}
+              disabled={select || animate}
               aria-label="positions-button"
               variant="primary"
               onClick={this.loadCurrentPosition}
@@ -280,7 +282,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
         <div className="button-container">
           <Button
             size="lg"
-            disabled={select}
+            disabled={select || animate}
             variant="primary"
             aria-label="First group"
             onClick={this.resetPosition}
@@ -293,7 +295,7 @@ class AnimatePanel extends React.PureComponent<Props, State> {
           </Button>
           <Button
             size="lg"
-            disabled={select}
+            disabled={select || animate}
             variant="primary"
             aria-label="Second group"
             onClick={this.startAnimation}
@@ -306,9 +308,10 @@ class AnimatePanel extends React.PureComponent<Props, State> {
           </Button>
           <Button
             size="lg"
-            disabled={select}
+            disabled={select || !animate}
             variant="primary"
             aria-label="Third group"
+            onClick={this.stopAnimation}
             onMouseUp={this.stopPropagation}
             onTouchEnd={this.stopPropagation}
             onMouseDown={this.stopPropagation}

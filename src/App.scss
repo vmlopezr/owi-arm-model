@@ -185,19 +185,24 @@ canvas {
 .slider::-moz-range-progress {
   background: #494444;
   height: $slider-height;
-
 }
 .slider::-moz-range-thumb {
   width: $slider-thumb-width; /* Set a specific slider handle width */
   height: $slider-thumb-height; /* Slider handle height */
-  background: $slider-thumb-color; /* Green background */
+  background: $slider-thumb-color; 
   border-radius: 3px;
   cursor: pointer; /* Cursor on hover */
   pointer-events: auto;
 }
+
+.slider:disabled {
+  background: #502424;
+  pointer-events: none;
+  opacity: 0.3;
+}
 .positions-container {
   margin: 15px auto;
-  background-color: #6b6b6ba0;
+  background-color: #6b6b6bd0;
   width: 95%;
   border-radius: 10px;
   p {

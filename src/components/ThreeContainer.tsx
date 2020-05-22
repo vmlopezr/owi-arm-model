@@ -20,14 +20,17 @@ interface Props {
 }
 interface State {
   robotValues: number[];
+  positionSeq: RobotValue[];
   showAxis: boolean;
   showLabels: boolean;
+  animation: boolean;
 }
 const transparentMat = new THREE.MeshBasicMaterial({
   color: 0xffffff,
   transparent: true,
   opacity: 0,
 });
+const frames = 100;
 export const yMat = new THREE.MeshStandardMaterial({ color: 0xffdf20 });
 export const blackMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
 export default class ThreeContainer extends Component<Props, State> {
@@ -41,6 +44,8 @@ export default class ThreeContainer extends Component<Props, State> {
     robotValues: [0, 0, 0, 0, 0],
     showAxis: true,
     showLabels: true,
+    animation: false,
+    positionSeq: [],
   };
 
   rotateFuncs: any[];
@@ -57,7 +62,7 @@ export default class ThreeContainer extends Component<Props, State> {
     gripper: [],
     gripperPositions: [],
     endEffector: new THREE.Mesh(createBox(0.5, 0.5, 0.5), transparentMat),
-    robotBase: new THREE.Mesh(createBox(8, 4, 16), transparentMat),
+    robotBase: new THREE.Mesh(createBox(8, 5, 16), transparentMat),
     labels: [],
     axis: new THREE.AxesHelper(30),
     boundingBox1: null,
@@ -69,6 +74,12 @@ export default class ThreeContainer extends Component<Props, State> {
     this.handles.renderer.domElement,
   );
   worldPos = new THREE.Vector3();
+  crtIndex = 0;
+  nextIndex = 0;
+  angleDelta = [0, 0, 0, 0, 0];
+  newPosition = [0, 0, 0, 0, 0];
+  frameCount = 0;
+
   constructor(props: any) {
     super(props);
     this.state = this.prevState;
@@ -77,15 +88,14 @@ export default class ThreeContainer extends Component<Props, State> {
     this.light.position.set(-5, 5, 5);
     this.handles.scene.add(this.light);
     this.handles.renderer.setPixelRatio(window.devicePixelRatio);
-    this.handles.renderer.autoClear = false;
     this.canvasCtx = null;
     this.controls.update();
     // Use the join axis arrays to calculate the rotation axis for joints
     this.rotateFuncs = [
       this.rotateJoint1,
       this.rotateJoint2,
-      this.rotateJoints3,
-      this.rotateJoints4,
+      this.rotateJoint3,
+      this.rotateJoint4,
       this.updateGripper,
     ];
     for (let i = 0; i < 4; i++) {
@@ -190,8 +200,24 @@ export default class ThreeContainer extends Component<Props, State> {
     this.setState({ showLabels: value });
     console.log('label config setstate');
   };
-  getPositionList = (robotValues: RobotValue[]) => {
-    console.log(robotValues);
+  startAnimation = (robotValues: RobotValue[]) => {
+    console.log('start animation');
+    if (robotValues.length !== 0) {
+      this.newPosition = [...robotValues[0].values];
+      this.angleDelta = [0, 0, 0, 0, 0];
+      this.crtIndex = 0;
+      this.nextIndex = 1;
+      this.setState({
+        animation: true,
+        positionSeq: [...robotValues],
+        robotValues: [...robotValues[0].values],
+      });
+    }
+  };
+  stopAnimation = () => {
+    this.setState({ animation: false });
+    this.resetPosition();
+    console.log(this.state.robotValues);
   };
   onSizeChange = () => {
     if (this.threeRootElement.current) {
@@ -217,7 +243,7 @@ export default class ThreeContainer extends Component<Props, State> {
     this.rotate(this.handles.joint[1], point, axis, angle);
   };
 
-  rotateJoints3 = (newAngle: number, prevAngle: number) => {
+  rotateJoint3 = (newAngle: number, prevAngle: number) => {
     const angle = this.rad(newAngle - prevAngle);
     const axis = this.handles.jointAxisStart[1].position
       .clone()
@@ -225,7 +251,7 @@ export default class ThreeContainer extends Component<Props, State> {
     const point = this.handles.origins[1].position;
     this.rotate(this.handles.joint[2], point, axis, angle);
   };
-  rotateJoints4 = (newAngle: number, prevAngle: number) => {
+  rotateJoint4 = (newAngle: number, prevAngle: number) => {
     const angle = this.rad(newAngle - prevAngle);
     const axis = this.handles.jointAxisStart[2].position
       .clone()
@@ -278,7 +304,9 @@ export default class ThreeContainer extends Component<Props, State> {
     }
     this.handles.lines.forEach((line) => (line.visible = value));
   };
-
+  resetPosition = () => {
+    this.setState({ robotValues: [0, 0, 0, 0, 0] });
+  };
   start = () => {
     if (!this.frameId) {
       this.frameId = requestAnimationFrame(this.animate);
@@ -295,21 +323,73 @@ export default class ThreeContainer extends Component<Props, State> {
     this.handles.endEffector.getWorldPosition(this.worldPos);
     return this.worldPos.clone();
   };
-  animate = () => {
-    this.handles.renderer.clear();
+
+  updateView = () => {
     this.controls.update();
     this.light.position.copy(this.handles.camera.position);
     this.handles.renderer.render(this.handles.scene, this.handles.camera);
-
-    this.handles.endEffector.getWorldPosition(this.worldPos);
-    const { x, y, z } = this.worldPos;
-    this.renderCoordinates(x.toFixed(1), y.toFixed(1), z.toFixed(1));
+  };
+  animate = () => {
+    this.updateView();
+    this.drawEffectCoordinates();
+    if (this.state.animation) {
+      this.drawPositions();
+    }
 
     this.frameId = requestAnimationFrame(this.animate);
   };
-  resetPosition = () => {
-    const robotvalues = [0, 0, 0, 0, 0];
-    this.setState({ robotValues: robotvalues });
+  drawPositions = () => {
+    const { length } = this.state.positionSeq;
+    const positions = this.state.positionSeq;
+    if (length === 0) return;
+    else if (length === 1) {
+      // Set the arm to the position
+      this.setState({
+        robotValues: positions[0].values.slice(),
+      });
+    } else {
+      // Update the current arm position index
+      if (this.frameCount === frames) {
+        this.crtIndex++;
+        this.frameCount = 0;
+        if (this.crtIndex >= length) this.crtIndex = 0;
+        this.nextIndex = this.crtIndex + 1;
+        if (this.crtIndex === length - 1) this.nextIndex = 0;
+
+        this.newPosition = [...positions[this.crtIndex].values];
+      }
+      // Set the angle change per position
+      if (this.frameCount !== frames) {
+        // set new position
+        if (this.frameCount === 0) {
+          this.angleDelta = this.angleDelta.map((value, index) => {
+            return (value =
+              (positions[this.nextIndex].values[index] -
+                positions[this.crtIndex].values[index]) /
+              frames);
+          });
+        }
+        this.frameCount++;
+        this.newPosition = this.newPosition.map((value, index) => {
+          return value + this.angleDelta[index];
+        });
+
+        this.setState({ robotValues: [...this.newPosition] });
+      }
+    }
+  };
+  compareArrays = (arr1: number[], arr2: number[]) => {
+    if (arr1.length !== arr2.length) return false;
+    for (let i = 0; i < arr1.length; i++) {
+      if (arr1[i] !== arr2[i]) return false;
+    }
+    console.log('true');
+    return true;
+  };
+  drawEffectCoordinates = () => {
+    this.handles.endEffector.getWorldPosition(this.worldPos);
+    const { x, y, z } = this.worldPos;
+    this.renderCoordinates(x.toFixed(1), y.toFixed(1), z.toFixed(1));
   };
   renderCoordinates = (x: string, y: string, z: string) => {
     const { width, height } = this.canvasCtx?.canvas as HTMLCanvasElement;
@@ -317,6 +397,7 @@ export default class ThreeContainer extends Component<Props, State> {
     this.drawCoordinates(`End Effector: `, 80, 30);
     this.drawCoordinates(`( ${x}, ${y}, ${z} )`, 80, 60);
   };
+
   render() {
     console.log('rendering three js');
     return (
@@ -327,7 +408,8 @@ export default class ThreeContainer extends Component<Props, State> {
           updateAxis={this.updateAxis}
           updateLabel={this.updateLabel}
           receiveRobotValues={this.sendRobotValues}
-          getPositionList={this.getPositionList}
+          startAnimation={this.startAnimation}
+          stopAnimation={this.stopAnimation}
           getEndEffectorYcor={this.getEndEffectorYcor}
           effectorIntersect={this.endEffectorIntersect}
         />

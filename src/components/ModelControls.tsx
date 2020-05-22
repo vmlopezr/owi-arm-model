@@ -10,7 +10,8 @@ interface Props {
   updateLabel(value: boolean): void;
   resetPosition(): void;
   receiveRobotValues(): number[];
-  getPositionList(robotValues: RobotValue[]): void;
+  startAnimation(robotValues: RobotValue[]): void;
+  stopAnimation(): void;
   getEndEffectorYcor(): number;
   effectorIntersect(): boolean;
 }
@@ -30,6 +31,7 @@ interface State {
   overflow: string;
   showControls: boolean;
   showAxes: boolean;
+  animation: boolean;
   showLabels: boolean;
   robotValues: number[];
 }
@@ -73,6 +75,7 @@ class ModelControls extends React.Component<Props, State> {
       showAxes: true,
       showControls: true,
       showLabels: true,
+      animation: false,
       robotValues: [0, 0, 0, 0, 0],
     };
   }
@@ -259,6 +262,14 @@ class ModelControls extends React.Component<Props, State> {
     this.props.updateLabel(label);
     event.stopPropagation();
   };
+  startAnimation = (robotValues: RobotValue[]) => {
+    this.props.startAnimation(robotValues);
+    this.setState({ animation: true });
+  };
+  stopAnimation = () => {
+    this.setState({ animation: false });
+    this.props.stopAnimation();
+  };
   showControls = (
     event:
       | React.TouchEvent<HTMLDivElement>
@@ -291,6 +302,7 @@ class ModelControls extends React.Component<Props, State> {
   };
   renderSlider = (config: Config, index: number) => (
     <ValueSlider
+      disabled={this.state.animation}
       value={this.state.robotValues[index]}
       key={index}
       {...config}
@@ -339,6 +351,7 @@ class ModelControls extends React.Component<Props, State> {
           <div className="button-container">
             <Button
               size="lg"
+              disabled={this.state.animation}
               variant="primary"
               aria-label="First group"
               onClick={this.onControlsButton}
@@ -353,6 +366,7 @@ class ModelControls extends React.Component<Props, State> {
             <Button
               size="lg"
               variant="primary"
+              disabled={this.state.animation}
               aria-label="Second group"
               onClick={this.onAxesButton}
               onMouseDown={this.stopPropagation}
@@ -365,6 +379,7 @@ class ModelControls extends React.Component<Props, State> {
 
             <Button
               size="lg"
+              disabled={this.state.animation}
               variant="primary"
               aria-label="Third group"
               onClick={this.onClickLabel}
@@ -379,7 +394,9 @@ class ModelControls extends React.Component<Props, State> {
           <AnimatePanel
             resetPosition={this.resetPosition}
             receiveRobotValues={this.props.receiveRobotValues}
-            getPositionList={this.props.getPositionList}
+            startAnimation={this.startAnimation}
+            stopAnimation={this.stopAnimation}
+            animate={this.state.animation}
           />
         </div>
         <div
