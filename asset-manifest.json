@@ -1,0 +1,25 @@
+{
+  "files": {
+    "main.css": "/owi-arm-model/static/css/main.22f0d04f.chunk.css",
+    "main.js": "/owi-arm-model/static/js/main.dc8eaf79.chunk.js",
+    "main.js.map": "/owi-arm-model/static/js/main.dc8eaf79.chunk.js.map",
+    "runtime-main.js": "/owi-arm-model/static/js/runtime-main.5182d4d9.js",
+    "runtime-main.js.map": "/owi-arm-model/static/js/runtime-main.5182d4d9.js.map",
+    "static/css/2.829c9cb5.chunk.css": "/owi-arm-model/static/css/2.829c9cb5.chunk.css",
+    "static/js/2.5efba10b.chunk.js": "/owi-arm-model/static/js/2.5efba10b.chunk.js",
+    "static/js/2.5efba10b.chunk.js.map": "/owi-arm-model/static/js/2.5efba10b.chunk.js.map",
+    "index.html": "/owi-arm-model/index.html",
+    "precache-manifest.44743734df4245dfe1ae55038a5ded5c.js": "/owi-arm-model/precache-manifest.44743734df4245dfe1ae55038a5ded5c.js",
+    "service-worker.js": "/owi-arm-model/service-worker.js",
+    "static/css/2.829c9cb5.chunk.css.map": "/owi-arm-model/static/css/2.829c9cb5.chunk.css.map",
+    "static/css/main.22f0d04f.chunk.css.map": "/owi-arm-model/static/css/main.22f0d04f.chunk.css.map",
+    "static/js/2.5efba10b.chunk.js.LICENSE.txt": "/owi-arm-model/static/js/2.5efba10b.chunk.js.LICENSE.txt"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.5182d4d9.js",
+    "static/css/2.829c9cb5.chunk.css",
+    "static/js/2.5efba10b.chunk.js",
+    "static/css/main.22f0d04f.chunk.css",
+    "static/js/main.dc8eaf79.chunk.js"
+  ]
+}
