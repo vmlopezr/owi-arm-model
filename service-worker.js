@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/owi-arm-model/precache-manifest.44743734df4245dfe1ae55038a5ded5c.js"
+  "/owi-arm-model/precache-manifest.f49ae097404592b9c44accd5a4ce7aa1.js"
 );
 
 self.addEventListener('message', (event) => {
