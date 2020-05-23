@@ -1,17 +1,7 @@
-import React, { FunctionComponent, ReactNode, useRef, useState } from 'react';
+import React, { FunctionComponent, useRef, useState } from 'react';
 import { ChevronIcon } from './ChevronIcon';
+import { AccordionProps } from './constants';
 import './styles/AngleAccordion.scss';
-
-interface AccordionProps {
-  children: {
-    header: ReactNode;
-    body: ReactNode;
-  };
-  selectItem(index: number): void;
-  deSelectItem(index: number): void;
-  onSelect: boolean;
-  index: number;
-}
 
 const stopPropagation = (
   event:
@@ -28,7 +18,7 @@ export const AngleAccordion: FunctionComponent<AccordionProps> = React.memo(
     const [setRotate, setRotateState] = useState('accordion__icon');
     const [setSelected, setSelectedState] = useState('');
     const content = useRef<HTMLDivElement>(null);
-
+    // Show the accordion on active state
     const toggleAccordion = () => {
       setActiveState(setActive === '' ? 'active' : '');
       setHeightState(
@@ -38,6 +28,8 @@ export const AngleAccordion: FunctionComponent<AccordionProps> = React.memo(
         setActive === 'active' ? 'accordion__icon' : 'accordion__icon rotate',
       );
     };
+    /* Select the accordion object and update color. This state is used, with the
+    select state, and will be used to delete items. By the parent component     */
     const selectItem = (
       event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     ) => {
@@ -53,6 +45,8 @@ export const AngleAccordion: FunctionComponent<AccordionProps> = React.memo(
       event.preventDefault();
       event.stopPropagation();
     };
+
+    // Reset the active, selected, rotation and height state on prop changes
     React.useEffect(() => {
       if (!props.onSelect) {
         setActiveState('');
@@ -79,8 +73,8 @@ export const AngleAccordion: FunctionComponent<AccordionProps> = React.memo(
           {props.children.header}
           <ChevronIcon
             className={props.onSelect ? 'accordion__icon' : `${setRotate}`}
-            width={20}
-            height={20}
+            width={15}
+            height={15}
             fill={'#777'}
           />
         </button>

@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import '../App.scss';
-import { RobotValue } from './AnimatePanel';
-import { ThreeModelObjects } from './constants';
+import { RobotValue, ThreeModelObjects } from './constants';
 import ModelControls from './ModelControls';
 import {
   constructGripper,
@@ -98,6 +97,7 @@ export default class ThreeContainer extends Component<Props, State> {
       this.rotateJoint4,
       this.updateGripper,
     ];
+    // Create the groups and objects used to calculate rotation axes
     for (let i = 0; i < 4; i++) {
       this.handles.joint.push(new THREE.Group());
       this.handles.gripperPositions.push(new THREE.Object3D());
@@ -111,9 +111,11 @@ export default class ThreeContainer extends Component<Props, State> {
 
   componentDidMount() {
     if (this.threeRootElement.current) {
+      // Add the canvas to the parent div element
       this.threeRootElement.current.appendChild(
         this.handles.renderer.domElement,
       );
+      // Set camera and canvas sizing
       const { clientHeight, clientWidth } = this.threeRootElement.current;
       this.handles.renderer.setClearColor(0xd6d6d6, 1);
       this.handles.renderer.setSize(clientWidth, clientHeight);
@@ -130,6 +132,7 @@ export default class ThreeContainer extends Component<Props, State> {
     this.handles.joint[0].add(this.handles.joint[1]);
     this.handles.scene.add(this.handles.joint[0]);
 
+    // Constructor the owi arm model
     constructJoint1(this.handles);
     constructJoint2(this.handles);
     constructJoint3(this.handles);
@@ -145,13 +148,7 @@ export default class ThreeContainer extends Component<Props, State> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.onSizeChange);
   }
-  drawCoordinates = (text: string, x: number, y: number) => {
-    if (this.canvasCtx) {
-      this.canvasCtx.font = 'Bold 25px Roboto';
-      this.canvasCtx.fillStyle = 'rgba(0,0,0,1)';
-      this.canvasCtx.fillText(text, x, y);
-    }
-  };
+  /* Create the bounding boxes which will be used to detect intersections*/
   createBoundingBoxes = () => {
     this.handles.endEffector.geometry.computeBoundingBox();
     this.handles.robotBase.geometry.computeBoundingBox();
@@ -160,13 +157,15 @@ export default class ThreeContainer extends Component<Props, State> {
     this.handles.boundingBox1?.setFromObject(this.handles.robotBase);
     this.handles.boundingBox2?.setFromObject(this.handles.endEffector);
   };
+  /* Detect if the end-effector position is intersecting the robotBase bounding box*/
   endEffectorIntersect = (): boolean => {
     return this.handles.boundingBox1?.containsPoint(
       this.endEffectorCoordinates(),
     ) as boolean;
   };
-  // Canvas does not need to re-render. Only need to receive data on
-  // Componentdidreceiveprops to update model with its renderTHREE() loop.
+  /* The canvas does not need to re-render. The ThreeContainer component only 
+  needs to receive the updated state data for the THREE animation loop to update
+  positioning. */
   shouldComponentUpdate(nextProps: Props, nextState: State) {
     this.rotateFuncs.forEach((rotate, index) => {
       if (nextState.robotValues[index] !== this.prevState.robotValues[index]) {
@@ -184,7 +183,7 @@ export default class ThreeContainer extends Component<Props, State> {
     }
     return false;
   }
-
+  /* Callback passed to children sliders to update the owi arm angle/position */
   updateArmConfig = (index: number, value: number): void => {
     const config = this.state.robotValues.slice();
     config[index] = value;
@@ -196,12 +195,14 @@ export default class ThreeContainer extends Component<Props, State> {
   displayLabel = (value: boolean): void => {
     this.setState({ showLabels: value });
   };
+  /* Start showing the movement between positions loaded to state.positionSeq */
   startAnimation = (robotValues: RobotValue[]) => {
     if (robotValues.length !== 0) {
       this.newPosition = [...robotValues[0].values];
       this.angleDelta = [0, 0, 0, 0, 0];
       this.crtIndex = 0;
       this.nextIndex = 1;
+      this.frameCount = 0;
       this.setState({
         animation: true,
         positionSeq: [...robotValues],
@@ -209,10 +210,12 @@ export default class ThreeContainer extends Component<Props, State> {
       });
     }
   };
+  /* Stop the position animation loop */
   stopAnimation = () => {
     this.setState({ animation: false });
     this.resetPosition();
   };
+  /* Update the canvas size on window size changes */
   onSizeChange = () => {
     if (this.threeRootElement.current) {
       const { clientWidth, clientHeight } = this.threeRootElement.current;
@@ -221,9 +224,11 @@ export default class ThreeContainer extends Component<Props, State> {
       this.handles.camera.updateProjectionMatrix();
     }
   };
+  /* Callback passed to children to give access to robotValues in state. */
   sendRobotValues = () => {
     return this.state.robotValues;
   };
+  /* Fucntions used to rotate the owi arm at each joint */
   rotateJoint1 = (newAngle: number, prevAngle: number) => {
     const angle = this.rad(newAngle - prevAngle);
     this.handles.joint[0].rotateY(angle);
@@ -254,12 +259,15 @@ export default class ThreeContainer extends Component<Props, State> {
     this.rotate(this.handles.joint[3], point, axis, angle);
   };
   updateGripper = (newValue: number, prevValue?: number) => {
+    // Calculate the change distance between start and end positions for each gripper
     const leftDelta = this.handles.gripperPositions[1].position
       .clone()
       .sub(this.handles.gripperPositions[0].position);
     const rightDelta = this.handles.gripperPositions[3].position
       .clone()
       .sub(this.handles.gripperPositions[2].position);
+
+    // Update the position of the grippers
     this.handles.gripper[0].position.copy(
       leftDelta
         .multiplyScalar((newValue - 50) / 100)
@@ -273,7 +281,7 @@ export default class ThreeContainer extends Component<Props, State> {
   };
 
   rad = (angle: number): number => (angle * Math.PI) / 180;
-
+  /* Rotate an object about an axis with respect to a point in space. Uses relative coordinates.*/
   rotate = (
     obj: THREE.Object3D,
     point: THREE.Vector3,
@@ -286,12 +294,15 @@ export default class ThreeContainer extends Component<Props, State> {
     obj.position.add(point); // re-add the offset
     obj.rotateOnAxis(normalAxis, theta); // rotate the OBJECT
   };
+  /* Update the visibility of the coordinate axes. */
   updateAxesVisibility = (value: boolean) => {
     this.handles.axis.visible = value;
     for (let i = 5; i < 8; i++) {
       this.handles.labels[i].visible = value;
     }
   };
+  /* Update the visibility of the labels and lines. */
+
   displayLabelVisibility = (value: boolean) => {
     for (let i = 0; i < 5; i++) {
       this.handles.labels[i].visible = value;
@@ -301,32 +312,51 @@ export default class ThreeContainer extends Component<Props, State> {
   resetPosition = () => {
     this.setState({ robotValues: [0, 0, 0, 0, 0] });
   };
+  /* Start the THREE rendering loop*/
   start = () => {
     if (!this.frameId) {
       this.frameId = requestAnimationFrame(this.renderTHREE);
     }
   };
-  stop = () => {
-    cancelAnimationFrame(this.frameId);
-  };
+  /* Retrieve the y world position of the end-effector */
   getEndEffectorYcor = () => {
     this.handles.endEffector.getWorldPosition(this.worldPos);
     return this.worldPos.y;
   };
+  /* Retrieve end-effector coordinates as THREE.Vector3*/
   endEffectorCoordinates = () => {
     this.handles.endEffector.getWorldPosition(this.worldPos);
     return this.worldPos.clone();
   };
+  /* Display the end-effector coordinates on the coordinate-canvas */
   drawEffectCoordinates = () => {
     this.handles.endEffector.getWorldPosition(this.worldPos);
     const { x, y, z } = this.worldPos;
-    this.renderCoordinates(x.toFixed(1), y.toFixed(1), z.toFixed(1));
+    const { width, height } = this.canvasCtx?.canvas as HTMLCanvasElement;
+    this.canvasCtx?.clearRect(0, 0, width, height);
+    this.drawTextOnCanvas(`End Effector: `, 80, 30);
+    this.drawTextOnCanvas(
+      `( ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)} )`,
+      80,
+      60,
+    );
   };
+  /* Draw the text at the specified position*/
+  drawTextOnCanvas = (text: string, x: number, y: number) => {
+    if (this.canvasCtx) {
+      this.canvasCtx.font = 'Bold 25px Roboto';
+      this.canvasCtx.fillStyle = 'rgba(0,0,0,1)';
+      this.canvasCtx.fillText(text, x, y);
+    }
+  };
+  /* Update the lighting in accordance to camera position */
   updateView = () => {
     this.controls.update();
     this.light.position.copy(this.handles.camera.position);
     this.handles.renderer.render(this.handles.scene, this.handles.camera);
   };
+
+  /* THREE render loop */
   renderTHREE = () => {
     this.updateView();
     this.drawEffectCoordinates();
@@ -336,6 +366,8 @@ export default class ThreeContainer extends Component<Props, State> {
 
     this.frameId = requestAnimationFrame(this.renderTHREE);
   };
+
+  /* Animate the arm moving betweet the positions retrieved in state.positionSeq*/
   drawPositions = () => {
     const { length } = this.state.positionSeq;
     const positions = this.state.positionSeq;
@@ -357,8 +389,8 @@ export default class ThreeContainer extends Component<Props, State> {
       }
       // Set the angle change per position
       if (this.frameCount !== frames) {
-        // set new position
         if (this.frameCount === 0) {
+          // Calculate the angle delta to add to current position
           this.angleDelta = this.angleDelta.map((value, index) => {
             return (value =
               (positions[this.nextIndex].values[index] -
@@ -367,24 +399,18 @@ export default class ThreeContainer extends Component<Props, State> {
           });
         }
         this.frameCount++;
+
+        // Update current position values
         this.newPosition = this.newPosition.map((value, index) => {
           return value + this.angleDelta[index];
         });
-
+        // set new position
         this.setState({ robotValues: [...this.newPosition] });
       }
     }
   };
 
-  renderCoordinates = (x: string, y: string, z: string) => {
-    const { width, height } = this.canvasCtx?.canvas as HTMLCanvasElement;
-    this.canvasCtx?.clearRect(0, 0, width, height);
-    this.drawCoordinates(`End Effector: `, 80, 30);
-    this.drawCoordinates(`( ${x}, ${y}, ${z} )`, 80, 60);
-  };
-
   render() {
-    console.log('rendering three js');
     return (
       <div ref={this.threeRootElement} className="threeCanvas">
         <ModelControls

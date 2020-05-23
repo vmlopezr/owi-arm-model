@@ -1,12 +1,10 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
 import { AngleAccordion } from './AngleAccordion';
+import { RobotValue } from './constants';
 import './styles/AnimatePanel.scss';
 import { TextInput } from './TextInput';
 
-export interface RobotValue {
-  values: number[];
-}
 interface Props {
   resetPosition(): void;
   receiveRobotValues(): number[];

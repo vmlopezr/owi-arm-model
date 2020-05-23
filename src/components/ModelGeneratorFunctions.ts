@@ -16,6 +16,8 @@ const createCylinder = (radius: number, height: number) => {
 export const createBox = (width: number, height: number, depth: number) => {
   return new THREE.BoxGeometry(width, height, depth);
 };
+
+/* Add a border to a canvas texture */
 const roundRect = (
   ctx: CanvasRenderingContext2D,
   x: number,
@@ -38,6 +40,8 @@ const roundRect = (
   ctx.fill();
   ctx.stroke();
 };
+
+/* Create a text sprite to add to three.js scene */
 const makeTextSprite = (
   message: string,
   params: SpriteParam,
@@ -240,7 +244,7 @@ export const constructGripper = (object: ThreeModelObjects) => {
 };
 export const createLabels = (object: ThreeModelObjects) => {
   // Create joint labels
-  object.labels.push(makeTextSprite('Joint 1', defSpriteParams, -10.5, 1.5, 0));
+  object.labels.push(makeTextSprite('Joint 1', defSpriteParams, -12.5, 2.5, 0));
   object.scene.add(object.labels[0]);
   object.labels.push(makeTextSprite('Joint 2', defSpriteParams, 0, 5.5, 10.5));
   object.labels[1].rotateY(-Math.PI / 2);
@@ -261,28 +265,27 @@ export const createLabels = (object: ThreeModelObjects) => {
 
   // Create Lines
   const points = [];
-  points.push(new THREE.Vector3(0, 5.5, 0));
-  points.push(new THREE.Vector3(0, 5.5, 9.75));
+  points.push(new THREE.Vector3(0, 2.5, 0));
+  points.push(new THREE.Vector3(-12.5, 2.5, 0));
   object.lines.push(
     new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(points),
+      new THREE.BufferGeometry().setFromPoints([points[0], points[1]]),
       new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
     ),
   );
-  object.joint[1].add(object.lines[0]);
-
-  points.push(new THREE.Vector3(0, 18.5, 0));
-  points.push(new THREE.Vector3(0, 18.5, 9.75));
+  object.scene.add(object.lines[0]);
+  points.push(new THREE.Vector3(0, 5.5, 0));
+  points.push(new THREE.Vector3(0, 5.5, 9.75));
   object.lines.push(
     new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([points[2], points[3]]),
       new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
     ),
   );
-  object.joint[2].add(object.lines[1]);
+  object.joint[1].add(object.lines[1]);
 
-  points.push(new THREE.Vector3(0, 13.5, 0));
-  points.push(new THREE.Vector3(0, 13.5, 9.75));
+  points.push(new THREE.Vector3(0, 18.5, 0));
+  points.push(new THREE.Vector3(0, 18.5, 9.75));
   object.lines.push(
     new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([points[4], points[5]]),
@@ -290,16 +293,27 @@ export const createLabels = (object: ThreeModelObjects) => {
     ),
   );
   object.joint[2].add(object.lines[2]);
-  points.push(new THREE.Vector3(0, 22.5, 0));
-  points.push(new THREE.Vector3(0, 22.5, 7.95));
+
+  points.push(new THREE.Vector3(0, 13.5, 0));
+  points.push(new THREE.Vector3(0, 13.5, 9.75));
   object.lines.push(
     new THREE.Line(
       new THREE.BufferGeometry().setFromPoints([points[6], points[7]]),
       new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
     ),
   );
-  object.joint[3].add(object.lines[3]);
+  object.joint[2].add(object.lines[3]);
+  points.push(new THREE.Vector3(0, 22.5, 0));
+  points.push(new THREE.Vector3(0, 22.5, 7.95));
+  object.lines.push(
+    new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints([points[8], points[9]]),
+      new THREE.LineBasicMaterial({ color: 0x3b3b3b }),
+    ),
+  );
+  object.joint[3].add(object.lines[4]);
 };
+/* Add grid axes and set the camera */
 export const createDisplay = (object: ThreeModelObjects): void => {
   object.scene.add(object.axis);
 

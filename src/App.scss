@@ -165,6 +165,7 @@ canvas {
   -webkit-transition: 0.2s; /* 0.2 seconds transition on hover */
   transition: opacity 0.2s;
   pointer-events: none;
+
 }
 
 /* Mouse-over effects */
@@ -181,9 +182,13 @@ canvas {
   border-radius: 3px;
   cursor: pointer; /* Cursor on hover */
   pointer-events: auto;
+  outline: none;
+}
+.slider:focus {
+  outline: none;
 }
 .slider::-moz-range-progress {
-  background: #494444;
+  background: #949494;
   height: $slider-height;
 }
 .slider::-moz-range-thumb {
@@ -193,6 +198,7 @@ canvas {
   border-radius: 3px;
   cursor: pointer; /* Cursor on hover */
   pointer-events: auto;
+  outline: none;
 }
 
 .slider:disabled {

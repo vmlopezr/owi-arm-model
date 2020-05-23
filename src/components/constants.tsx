@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 export const defaultFontBackground = '#ffffff';
 export const redColor = '#ff0000';
 export const greenColor = '#007000';
@@ -32,6 +33,9 @@ export interface SpriteParam {
   borderColor?: string;
   backgroundColor?: string;
   textColor?: string;
+}
+export interface RobotValue {
+  values: number[];
 }
 export interface ThreeModelObjects {
   scene: THREE.Scene;
@@ -88,3 +92,53 @@ export const ControlConfig = [
   },
   { label: 'Gripper', defaultVal: 0, max: 100, min: 0, valUnit: '%' },
 ];
+export interface ControlsProps {
+  updateConfig(index: number, value: number): void;
+  displayAxis(value: boolean): void;
+  displayLabel(value: boolean): void;
+  resetPosition(): void;
+  receiveRobotValues(): number[];
+  startAnimation(robotValues: RobotValue[]): void;
+  stopAnimation(): void;
+  getEndEffectorYcor(): number;
+  effectorIntersect(): boolean;
+}
+export interface Position {
+  x: number;
+  y: number;
+}
+export interface ControlsState {
+  pos: Position;
+  portraitPos: Position;
+  landscapePos: Position;
+  dragging: boolean;
+  rel: Position;
+  backgroundColor: string;
+  width: string | number;
+  height: string | number;
+  overflow: string;
+  showControls: boolean;
+  showAxes: boolean;
+  animation: boolean;
+  showLabels: boolean;
+  robotValues: number[];
+}
+export interface SliderConfig {
+  label: string;
+  defaultVal: number;
+  max: number;
+  min: number;
+  valUnit: string;
+}
+export const defaultBackground = '#222831da';
+export const backgroundHover = '#222831a0';
+export interface AccordionProps {
+  children: {
+    header: ReactNode;
+    body: ReactNode;
+  };
+  selectItem(index: number): void;
+  deSelectItem(index: number): void;
+  onSelect: boolean;
+  index: number;
+}

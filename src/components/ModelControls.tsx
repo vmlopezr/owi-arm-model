@@ -1,58 +1,29 @@
 import React from 'react';
 import Button from 'react-bootstrap/Button';
 import '../App.scss';
-import AnimatePanel, { RobotValue } from './AnimatePanel';
-import { ControlConfig } from './constants';
+import AnimatePanel from './AnimatePanel';
+import {
+  backgroundHover,
+  ControlConfig,
+  ControlsProps,
+  ControlsState,
+  defaultBackground,
+  RobotValue,
+  SliderConfig,
+} from './constants';
 import ValueSlider from './ValueSlider';
-interface Props {
-  updateConfig(index: number, value: number): void;
-  displayAxis(value: boolean): void;
-  displayLabel(value: boolean): void;
-  resetPosition(): void;
-  receiveRobotValues(): number[];
-  startAnimation(robotValues: RobotValue[]): void;
-  stopAnimation(): void;
-  getEndEffectorYcor(): number;
-  effectorIntersect(): boolean;
-}
-interface Position {
-  x: number;
-  y: number;
-}
-interface State {
-  pos: Position;
-  portraitPos: Position;
-  landscapePos: Position;
-  dragging: boolean;
-  rel: Position;
-  backgroundColor: string;
-  width: string | number;
-  height: string | number;
-  overflow: string;
-  showControls: boolean;
-  showAxes: boolean;
-  animation: boolean;
-  showLabels: boolean;
-  robotValues: number[];
-}
-interface Config {
-  label: string;
-  defaultVal: number;
-  max: number;
-  min: number;
-  valUnit: string;
-}
 
-const defaultBackground = '#222831da';
-const backgroundHover = '#222831a0';
-
-class ModelControls extends React.Component<Props, State> {
+/* Controls panel for the application. This panel can be dragged accros the screen. 
+Note that it needs ot keep some flags in the state since the parent component 'ThreeContainer' 
+does not rerender. As a result the variables cannot be passed as props.*/
+class ModelControls extends React.Component<ControlsProps, ControlsState> {
   containerRef: React.RefObject<HTMLDivElement>;
   longPressTimeout: any;
   onMobile: boolean;
   constructor(props: any) {
     super(props);
     this.containerRef = React.createRef<HTMLDivElement>();
+    // Detect whether running on mobile or PC
     if (
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent,
@@ -82,7 +53,7 @@ class ModelControls extends React.Component<Props, State> {
 
   componentDidMount() {
     window.addEventListener('resize', this.resizeControls, false);
-
+    // Resize on Mobile devices
     if (this.onMobile) {
       this.resizeControls();
     }
@@ -90,11 +61,11 @@ class ModelControls extends React.Component<Props, State> {
   componentWillUnmount() {
     window.removeEventListener('resize', this.resizeControls);
   }
-
+  /* Call back for resize event */
   resizeControls = () => {
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
     if (this.onMobile) {
-      // Update position of the controls div based on orientation
+      // Update position of the Controls Panel based on orientation
       this.setState({
         pos: isPortrait ? this.state.portraitPos : this.state.landscapePos,
         backgroundColor: defaultBackground,
@@ -104,12 +75,12 @@ class ModelControls extends React.Component<Props, State> {
       window.scrollTo(0, 0);
     } else {
       if (this.containerRef.current) {
-        // get width of the controls div and left position
+        // get width of the Controls Panel and left position
         const { offsetWidth, offsetLeft } = this.containerRef.current;
         const { innerWidth } = window;
         const xDelta = innerWidth - offsetWidth;
 
-        // Push the controls div left as window gets smaller
+        // Push the Controls Panel left as window gets smaller
         this.setState({
           pos: {
             x: offsetLeft >= xDelta ? xDelta : offsetLeft,
@@ -120,6 +91,7 @@ class ModelControls extends React.Component<Props, State> {
       }
     }
   };
+  /* Update the color of the Controls Panel to communicate dragging.*/
   onMouseDown = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (event.button !== 0) return;
     const top = event.currentTarget.offsetTop;
@@ -130,6 +102,7 @@ class ModelControls extends React.Component<Props, State> {
       y: pageY - top,
     };
     event.currentTarget.style.cursor = 'move';
+    // Update the background color and set dragging flag to allow movement
     this.setState({
       dragging: true,
       rel: newPosition,
@@ -137,11 +110,7 @@ class ModelControls extends React.Component<Props, State> {
     });
     event.stopPropagation();
   };
-  onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    event.currentTarget.style.cursor = 'auto';
-    this.setState({ dragging: false, backgroundColor: defaultBackground });
-    event.stopPropagation();
-  };
+  /* Update the position of the Controls Panel on move event */
   onMouseMove = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     if (!this.state.dragging) return;
 
@@ -168,11 +137,20 @@ class ModelControls extends React.Component<Props, State> {
 
     event.stopPropagation();
   };
+  /* Reset the background color of the Controls Panel and dragging flag. */
+  onMouseUp = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    event.currentTarget.style.cursor = 'auto';
+    this.setState({ dragging: false, backgroundColor: defaultBackground });
+    event.stopPropagation();
+  };
+  /* Cancel the movement when the mouse icon exits the panel. */
   onMouseLeave = (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     event.currentTarget.style.cursor = 'auto';
     this.setState({ dragging: false, backgroundColor: defaultBackground });
     event.stopPropagation();
   };
+
+  /*  Update the the background and enable dragging*/
   onTouchStart = (event: React.TouchEvent<HTMLDivElement>) => {
     const top = event.currentTarget.offsetTop;
     const left = event.currentTarget.offsetLeft;
@@ -190,6 +168,8 @@ class ModelControls extends React.Component<Props, State> {
     }, 300);
     event.stopPropagation();
   };
+
+  /* Update the position object based on orientation and reset the background color and dragging flag */
   onTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
     const isPortrait = window.matchMedia('(orientation: portrait)').matches;
     if (isPortrait) {
@@ -210,6 +190,7 @@ class ModelControls extends React.Component<Props, State> {
 
     event.stopPropagation();
   };
+  /* Update the postiion of the Controls Panel */
   onTouchMove = (event: React.TouchEvent<HTMLDivElement>) => {
     if (!this.state.dragging) {
       clearTimeout(this.longPressTimeout);
@@ -221,6 +202,7 @@ class ModelControls extends React.Component<Props, State> {
 
     let newX = pageX - this.state.rel.x;
     let newY = pageY - this.state.rel.y;
+    // Verify that the panel is in the viewport
     if (newX < 0) newX = 0;
     else if (newX > innerWidth - offsetWidth) newX = innerWidth - offsetWidth;
     if (newY < 0) newY = 0;
@@ -234,7 +216,8 @@ class ModelControls extends React.Component<Props, State> {
     });
     event.stopPropagation();
   };
-  onControlsButton = (
+  // Hide the Controls Panel
+  toggleControls = (
     event:
       | React.MouseEvent<HTMLButtonElement, MouseEvent>
       | React.TouchEvent<HTMLButtonElement>,
@@ -244,32 +227,36 @@ class ModelControls extends React.Component<Props, State> {
     event.stopPropagation();
     event.preventDefault();
   };
-  onAxesButton = (
+  // Toggle the Axis on the model
+  toggleAxes = (
     event:
       | React.MouseEvent<HTMLButtonElement, MouseEvent>
       | React.TouchEvent<HTMLButtonElement>,
   ) => {
     event.currentTarget.blur();
-    const axes = !this.state.showAxes;
-    this.props.displayAxis(axes);
-    this.setState({ showAxes: axes });
+    this.props.displayAxis(!this.state.showAxes);
+    this.setState({ showAxes: !this.state.showAxes });
     event.stopPropagation();
   };
-  onClickLabel = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+  // Toggle the Labels on the model
+  toggleLabels = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     event.currentTarget.blur();
     const label = !this.state.showLabels;
     this.setState({ showLabels: label });
     this.props.displayLabel(label);
     event.stopPropagation();
   };
+  // Run the callback to start the animation via ThreeContainer
   startAnimation = (robotValues: RobotValue[]) => {
     this.props.startAnimation(robotValues);
     this.setState({ animation: true });
   };
+  // Run the callback to stop the animation via ThreeContainer
   stopAnimation = () => {
     this.setState({ animation: false });
     this.props.stopAnimation();
   };
+  /* Show the controls panel. Called on by a click on the "show-controls" div*/
   showControls = (
     event:
       | React.TouchEvent<HTMLDivElement>
@@ -281,7 +268,9 @@ class ModelControls extends React.Component<Props, State> {
     });
     event.stopPropagation();
   };
-  // written to prevent event propagatiion
+  /* Written to stop propagation on either mouse or touch events. This needs to 
+  be added to any clickable/pressable object, otherwise the event will propagate
+  up to the draggable control panel.                                            */
   stopPropagation = (
     event:
       | React.MouseEvent<HTMLButtonElement, MouseEvent>
@@ -289,18 +278,22 @@ class ModelControls extends React.Component<Props, State> {
   ) => {
     event.stopPropagation();
   };
+  /* Updates the background on the "show-controls" div when pressing down*/
   pressShowControls = (event: React.TouchEvent<HTMLDivElement>) => {
     console.log('button event start');
     this.setState({ backgroundColor: backgroundHover });
     event.stopPropagation();
   };
+  /* Update state to store slider values, as well as use parent callback to update
+  the threejs model of the owi arm                                                */
   updateArmConfig = (index: number, value: number): void => {
     const config = this.state.robotValues.slice();
     config[index] = value;
     this.setState({ robotValues: config });
     this.props.updateConfig(index, value);
   };
-  renderSlider = (config: Config, index: number) => (
+  /* Show slider components */
+  renderSlider = (config: SliderConfig, index: number) => (
     <ValueSlider
       disabled={this.state.animation}
       value={this.state.robotValues[index]}
@@ -312,6 +305,7 @@ class ModelControls extends React.Component<Props, State> {
       effectorIntersect={this.props.effectorIntersect}
     />
   );
+  /* Reset the sliders to 0, and use callback to reset the position of the owi arm*/
   resetPosition = () => {
     this.props.resetPosition();
     this.setState({ robotValues: [0, 0, 0, 0, 0] });
@@ -354,7 +348,7 @@ class ModelControls extends React.Component<Props, State> {
               disabled={this.state.animation}
               variant="primary"
               aria-label="First group"
-              onClick={this.onControlsButton}
+              onClick={this.toggleControls}
               onMouseUp={this.stopPropagation}
               onTouchEnd={this.stopPropagation}
               onMouseDown={this.stopPropagation}
@@ -368,7 +362,7 @@ class ModelControls extends React.Component<Props, State> {
               variant="primary"
               disabled={this.state.animation}
               aria-label="Second group"
-              onClick={this.onAxesButton}
+              onClick={this.toggleAxes}
               onMouseDown={this.stopPropagation}
               onTouchStart={this.stopPropagation}
               onMouseUp={this.stopPropagation}
@@ -382,7 +376,7 @@ class ModelControls extends React.Component<Props, State> {
               disabled={this.state.animation}
               variant="primary"
               aria-label="Third group"
-              onClick={this.onClickLabel}
+              onClick={this.toggleLabels}
               onMouseDown={this.stopPropagation}
               onMouseUp={this.stopPropagation}
               onTouchStart={this.stopPropagation}

@@ -1,44 +1,58 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# OWI Arm Web Model
+This project was built with react-app and three.js to build a model of a OWI-535 Robot Arm.
+The app allows the user to move the arm with the provided sliders, set positions 
+and move the arm with the position set. 
 
-## Available Scripts
+Demo: https://vmlopezr.github.io/owi-arm-model  
 
-In the project directory, you can run:
+This is demo is an addition to  a [robotics project](https://github.com/vmlopezr/ECE5330_6311_Final_Project)
+using the OWI-535 arm with an STM32 microcontroller and OpenCV.
 
-### `yarn start`
+**Available Controls:**  
+- Left Clicking Drag: Rotate the camera about the 3D Model.
+- Right Clicking Drag: Pan the camera.
+- Middle Scroll: Zoom the camera view.
+- Arrow Keys: Pan the camera in the same directions as right click dragging.   
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+![Model Demo](./assets/owi-arm.gif)
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+## Installing / Getting Started
+To modify and use development mode clone the repository and run either of the following:
+```bash
+$ yarn install
+$ npm install
+```
 
-### `yarn test`
+## Development
+Run the app in development mode with local server with either:
+```bash
+$ yarn start
+$ npm run start
+```
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+The development server can be accessed in the browser at [http://localhost:3000](http://localhost:3000).
 
-### `yarn build`
+## Build
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+To build the production files use either of the following:
+```bash
+$ yarn build
+$ npm run build
+```
+The static files will be stored in the build folder at the root of this repository.
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Docker
 
-### `yarn eject`
+The application can also be run with docker using the dockerfile provided.
+To build the image use:
+```bash
+docker build -t $(YOUR_IMAGE_NAME) .      
+```
+To run the docker image in the background use:
+```bash
+docker run --rm -d -p 3000:3000 $(YOUR_IMAGE_NAME)
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+Once running, the application can be reached at:
+```http://$(LOCAL_IP_ADDRESS):3000```
